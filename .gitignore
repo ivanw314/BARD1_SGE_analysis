@@ -14,3 +14,4 @@ ipython_config.py
 .jupyter/
 .local/share/jupyter/
 
+.DS_Store
