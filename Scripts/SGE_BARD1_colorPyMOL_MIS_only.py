@@ -3,24 +3,21 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 
 #This script isn't super user-friendly but here's the run down:
-#First, please make sure the correct file is selected
-#Second, make sure you have the correct region selected, regions are dataset  
-#specific and commented out to describe which domain and PDB ID it is from
-#Third, 
-#BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
-#make_residue_values() function
+#Simply enter the region name and analysis type in the User-provided inputs block
+#Make sure you have the correct datafile selected
+#and set coloring based on chains in the make_residue_values() function
 
 
 #User-provided inputs
-region = 'BRCT' #Hardcode the region name here
-analysis = 'min' #mininum or mean score used for coloring
+region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
+analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250122_BARD1_SGEscores_wAAsub.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
 ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #ring (1JM7)
-adr = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ANK (3C5R)
+adr = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ADR (3C5R)
 brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
 #regions = [(1,301)] #BRCA1 RING
 
