@@ -10,29 +10,57 @@ from matplotlib.colors import LinearSegmentedColormap
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Desktop/20241021_BARD1_RING_Domain_PillarPjct_Plus1B.xlsx' #BARD1 scores with 1B RING
-#file = '/Users/ivan/Desktop/20241004_BARD1_PillarProject_DataFreeze.xlsx'
+
+#User-provided inputs
+region = 'BRCT' #Hardcode the region name here
+analysis = 'min' #mininum or mean score used for coloring
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250122_BARD1_SGEscores_wAAsub.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
-regions = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #ring (1JM7)
-#regions = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ANK (3C5R)
-#regions = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
+ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #ring (1JM7)
+adr = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ANK (3C5R)
+brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
 #regions = [(1,301)] #BRCA1 RING
+
+
+#Region Offsets (What amino acid residue does the structure start in PyMOL?)
+ring_offset = 26
+adr_offset = 425
+brct_offset = 566
+
+
 
 def read_scores(file): #Reads and filters the score files
     excel = pd.read_excel(file) #Reads excel file into df
-    data = excel[['target','pos','Consequence','snv_score_minmax']] #pulls out these relevant columns
+    data = excel[['target','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
+
+def get_region_info(region): #Gets the respective coordinates and offset for each domain
+    
+    if region == 'RING':
+        region_coords = ring
+        offset = ring_offset
+        
+    elif region == 'ADR':
+        region_coords = adr
+        offset = adr_offset
+        
+    elif region == 'BRCT':
+        region_coords = brct
+        offset = brct_offset
+    
+    return region_coords, offset
 
 def pull_scores(data, regions): #Filters for missense scores
     coords = [] #List to hold coordinates for each codon
-    consequence = ['missense_variant'] #condition upon which data is fitlered (missense only)
     for start, end in regions: #loop that creates the coordinates for all codons
         for i in range(start, end + 1):
             coords.append(i)
-    filtered = data[data['pos'].isin(coords) & data['Consequence'].isin(consequence)] #filters data for missense only and only within the specified coordinates
+            
+    #filters data for missense only and only within the specified coordinates. Will include multi-consequence variants
+    filtered = data[data['pos'].isin(coords) & data['Consequence'].str.contains('missense')] 
     
     filtered = filtered.reset_index(drop = True) #resets index to look nice
 
@@ -40,7 +68,7 @@ def pull_scores(data, regions): #Filters for missense scores
         
     return filtered, codon_num, coords
 
-def make_residue_values(data, num, coords):
+def make_residue_values(data, num, coords, region_offset, analysis):
     codon_score = {}
     codon_lists = []
     
@@ -54,32 +82,51 @@ def make_residue_values(data, num, coords):
 
         i += 1
 
-    #This loop gets the mean score for each codon and makes a dictionary element    
+    #This loop gets the min/mean score for each codon and makes a dictionary element    
     j = 0
     while j < num:
         data_filt = data.copy() #copy of data for each loop 
         data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
-        mean = data_filt['snv_score_minmax'].min() #mean of scores is taken
         
-        #offset needed to assign correct residue number in PyMOL structure
-        offset = 26 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (26 for RING, 425 for ANK, 566 for BRCT)
+        if analysis == 'min':
+            min_score = data_filt['snv_score'].min() #min of scores is taken
+            
+            #offset needed to assign correct residue number in PyMOL structure
+            offset = region_offset #offset in PyMOL structure 
+            
+            codon_score[j+ offset] = min_score #min score found and assigned to dictionary with key of base codon number + offset
         
-        codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
-        
-        #this code can be used as a way to use medians for color mapping instead of mean
-        #median = data_filt['snv_score_minmax'].median()
-        #codon_score[j+1] = median
+        elif analysis == 'mean':
+            mean_score = data_filt['snv_score'].mean() #mean of scores is taken
+            
+            #offset needed to assign correct residue number in PyMOL structure
+            offset = region_offset #offset in PyMOL structure 
+            
+            codon_score[j+ offset] = mean_score #mean score found and assigned to dictionary with key of base codon number + offset
+ 
         j += 1
         
     return codon_score
 
-def normalize_values(values): #Function needed to make sure all means between 0 and 1 for colormapping
-    min_val = min(values.values()) #Gets min mean residue score
-    max_val = max(values.values()) #Gets max mean residue score
-    return {k: (v - min_val) / (max_val - min_val) for k, v in values.items()} #min-max normalized
+def normalize_values(values): #Normalizes all values between 0 and 1 for coloring
+    # First clamp all values between 0 and 1
+    clamped_values = {k: min(max(v, 0), 1) for k, v in values.items()}
+    clamped_values = {k: v for k, v in clamped_values.items() if not pd.isna(v)} #Filters out NA values
+    
+    
+    # Get min and max of clamped values
+    min_val = min(clamped_values.values())
+    max_val = max(clamped_values.values())
+    
+    # Avoid division by zero if all values are the same
+    if max_val == min_val:
+        return {k: min_val for k in values.keys()}
+        
+    # Perform normalization
+    return {k: (v - min_val) / (max_val - min_val) for k, v in clamped_values.items()}
 
 
-colors = [(0.85, 0.85, 0.85), (1, 0, 0)]  # Gray -> Red
+colors = [(1.0, 1.0, 1.0), (1, 0, 0)]  # White -> Red
 n_bins = 1000  # Number of bins for the colormap
 cmap_name = 'gray_to_red'
 custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
@@ -87,20 +134,22 @@ custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #ma
 
 
 def get_color(value): #Gets color for each residue from mean score
-    return custom_cmap(1 - value) #Inverts the colors, Gray is high score and Red is low
+    return custom_cmap(1 - value) #Inverts the colors, White is high score and Red is low
 
 
 def main():
     data = read_scores(file) #Reads data
-    filtered, num, coords = pull_scores(data, regions) #Gets filtered scores
-    residue_values = make_residue_values(filtered, num, coords ) #Makes per-residue mean scores
+    region_coords, offset = get_region_info(region)
+    filtered, num, coords = pull_scores(data, region_coords) #Gets filtered scores
+    residue_values = make_residue_values(filtered, num, coords, offset, analysis) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
+    
     #this block does the coloring
     for residue, value in normalized_values.items(): 
         color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
         #cmd.color(color_name, f'resi {residue}')
     cmd.show('cartoon')
 
