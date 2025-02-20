@@ -6,12 +6,14 @@ Created on Thu Feb  6 11:06:12 2025
 @author: ivan
 """
 
+
 import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
 sge_scores = '/Users/ivan/Desktop/AAsubstitutions.withSNVscores.allexons.tsv' #File of SGE scores
 region = 'ARDBRCT' #Structured BARD1 regions to create surface for
+chain = 'N' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers
     region_residues = []
@@ -142,7 +144,7 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
     print(f"Created colored surface object: {surface_name}")
     
 
-def main():
+def main(chain):
     region_resi = region_residues(region) #Gets region residues
     raw_scores = read_scores(sge_scores, region_resi) #Gets raw SGE scores
     min_scores, mean_scores = group_scores(raw_scores) #Gets min/mean score dataframes
@@ -157,6 +159,6 @@ def main():
     for elem in scores: #iterates through the min and mean scores to create both min and mean surfaces
         scores, surface_name = elem
         surface_name = surface_name + "_" + region
-        color_surface_by_property(chain = 'N', property_dict = scores, palette = 'rw', 
+        color_surface_by_property(chain = chain, property_dict = scores, palette = 'rw', 
                                        transparency = 0.5, surface_name = surface_name)
-main()
+main(chain)
