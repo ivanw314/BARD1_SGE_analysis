@@ -11,9 +11,9 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Desktop/AAsubstitutions.withSNVscores.allexons.tsv' #File of SGE scores
-region = 'ARDBRCT' #Structured BARD1 regions to create surface for
-chain = 'N' #Specify chain to color 
+sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/QC_dev_data/BARD1.scores.eval.tsv' #File of SGE scores
+region = 'ARD' #Structured BARD1 regions to create surface for
+chain = 'A' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers
     region_residues = []
@@ -36,6 +36,7 @@ def region_residues(region): #Takes region input and creates the respective resi
 def read_scores(file, region_resi): #Reads score file
     df = pd.read_csv(file, sep = '\t')
     
+    df = df.rename(columns = {'simplified_consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
     df = df.loc[df['Consequence'].str.contains('missense_variant')] #Filters only for missense variants
     
     df['AApos'] = df['AAsub'].transform(lambda x: x[1:-1]) #Creates new amino acid position column 
@@ -109,7 +110,8 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
             return spectrum[idx]
         elif palette in ["rw", "red-white"]:
             # Clamp the value between 0 and 1
-            normalized = max(0, min(1, value))
+            normalized = max(-0.5, min(0, value))
+            normalized = 1 + 2 * normalized  #Normalization equation to get normalized variable in [0,1]
             
             # Create a custom color that transitions from red to white
             color_name = f"custom_color_{value}"
@@ -127,7 +129,7 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
             
             '''
             cmd.set_color(color_name, [r, g, b])
-            
+
             return color_name
         else:
             raise ValueError("Unsupported palette: choose 'rainbow' or 'rw'")
@@ -148,7 +150,6 @@ def main(chain):
     region_resi = region_residues(region) #Gets region residues
     raw_scores = read_scores(sge_scores, region_resi) #Gets raw SGE scores
     min_scores, mean_scores = group_scores(raw_scores) #Gets min/mean score dataframes
-    
 
     
     cmd.extend("color_surface_by_property", color_surface_by_property) #Creates color_surface PyMOL command
