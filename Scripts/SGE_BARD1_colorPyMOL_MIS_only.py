@@ -9,29 +9,30 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250122_BARD1_SGEscores_wAAsub.xlsx' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/QC_dev_data/BARD1.scores.eval.tsv' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
-ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #ring (1JM7)
-adr = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ADR (3C5R)
+ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #RING (1JM7)
+ard = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ARD (3C5R) 
 brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
 #regions = [(1,301)] #BRCA1 RING
 
 
 #Region Offsets (What amino acid residue does the structure start in PyMOL?)
 ring_offset = 26
-adr_offset = 425
+ard_offset = 425
 brct_offset = 566
 
 
 
 def read_scores(file): #Reads and filters the score files
-    excel = pd.read_excel(file) #Reads excel file into df
-    data = excel[['target','pos','Consequence','snv_score']] #pulls out these relevant columns
+    excel = pd.read_csv(file, sep = '\t') #Reads TSV file into df
+    excel = excel.rename(columns = {'simplified_consequence': 'Consequence', 'score': 'snv_score'})
+    data = excel[['exon','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
 
 def get_region_info(region): #Gets the respective coordinates and offset for each domain
@@ -40,9 +41,9 @@ def get_region_info(region): #Gets the respective coordinates and offset for eac
         region_coords = ring
         offset = ring_offset
         
-    elif region == 'ADR':
-        region_coords = adr
-        offset = adr_offset
+    elif region == 'ARD':
+        region_coords = ard
+        offset = ard_offset
         
     elif region == 'BRCT':
         region_coords = brct
@@ -107,9 +108,8 @@ def make_residue_values(data, num, coords, region_offset, analysis):
 
 def normalize_values(values): #Normalizes all values between 0 and 1 for coloring
     # First clamp all values between 0 and 1
-    clamped_values = {k: min(max(v, 0), 1) for k, v in values.items()}
+    clamped_values = {k: min(max(v, -0.5), 0) for k, v in values.items()}
     clamped_values = {k: v for k, v in clamped_values.items() if not pd.isna(v)} #Filters out NA values
-    
     
     # Get min and max of clamped values
     min_val = min(clamped_values.values())
@@ -147,7 +147,7 @@ def main():
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
         cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
-        #cmd.color(color_name, f'resi {residue}')
+
     cmd.show('cartoon')
 
 main()
