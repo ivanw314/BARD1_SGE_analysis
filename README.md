@@ -24,11 +24,12 @@ These scripts are:
 * SGE_BARD1_colorPyMOL_MIS_only - Colors ribbon cartoon protein structures using missense SGE scores  **(Needs SGE Data File)**
 * SGE_PyMOL_BARD1_ColorSurface - Generates colored surfaces displaying minimum and mean missense surface score  **(Needs SGE Data File)**
 * SGE_PyMOL_BRCA1_ColorSurface - Generates colored surfaces displaying minimum and mean missense surface score. Specific script to handle previous BRCA1 SGE data **(Needs BRCA1 SGE File)**
-* SGE_FilterImpossibleAAs_beta - Filters out variants that are likely to yield poor data. Includes: amino acid changes not possible in WT sequence and variants that craete new NGG PAM site near guide site. Also includes functions for handling removing variants that are low-frequency, but not currently in use. **(Needs: SGE Data File, oligo deign file, and lib reference file)**
+* SGE_DataFilter_ReferenceGenerator - Generates library reference file needed for filtering impossible amino acid changes **(Needs BARD1 fasta file and BARD1 input file)**
+* SGE_FilterImpossibleAAs_beta - Filters out variants that are likely to yield poor data. Includes: amino acid changes not possible in WT sequence and variants that craete new NGG PAM site near guide site. Also includes functions for handling removing variants that are low-frequency, but not currently in use. **(Needs: SGE Data File, oligo design file, and lib reference file)**
 
 
 ## Data
-This folder contains information needed to run notebooks for figure generation. This includes the raw SGE scores in TSV format as well as data from databases such as ClinVar and gnomAD. All data files will be dated based on when they were retrieved. 
+This folder contains information needed to run notebooks for figure generation and filtering of variants to yield final data set. This includes the raw SGE scores in TSV format as well as data from databases such as ClinVar and gnomAD. All data files dated based on when they were retrieved. 
 
 These datafiles are:
 * 20250122_BARD1_SGEscores_wAAsub.xlsx - BARD1 SGE scores based on LFC with column for amino acid substitution. **(SGE Data File)**
@@ -40,4 +41,9 @@ These datafiles are:
 * 20250123_BARD1_NormReadDepth.tsv - Normalized read depth across all BARD1 SGE targets for each replicate **(BARD1 Depth File)**
 * 20250205_deletion_inputs.xlsx - BARD1 deletiion inputs with exons annoted for each region **(Depth Input File)**
 * 20240830_BRCA1_SGE_AllScores.xlsx - BRCA1 SGE scores from Findlay et. al 2018 **(BRCA1 SGE File)**
+
+Also contained are sub-directories used for specific analyses. These sub-directories are:
+* ATG_Lib_data - Contains files associatd with the BARD1_X1A double start codon mutant experiment
+* SNV_filtering_inputers - Contains all input files needed to filter out SNVs that generate new PAM sites adjacent to canonical PAM and SNVs resulting in missense changes that are obtainable only in context of a fixed edit
+
 
