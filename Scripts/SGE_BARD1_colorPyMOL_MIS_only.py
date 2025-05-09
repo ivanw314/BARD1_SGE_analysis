@@ -9,7 +9,7 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/QC_dev_data/BARD1.scores.eval.tsv' #SGE Score file
 
