@@ -9,9 +9,9 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/QC_dev_data/BARD1.scores.eval.tsv' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update.tsv' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
@@ -108,7 +108,7 @@ def make_residue_values(data, num, coords, region_offset, analysis):
 
 def normalize_values(values): #Normalizes all values between 0 and 1 for coloring
     # First clamp all values between 0 and 1
-    clamped_values = {k: min(max(v, -0.5), 0) for k, v in values.items()}
+    clamped_values = {k: min(max(v, -0.3), 0) for k, v in values.items()}
     clamped_values = {k: v for k, v in clamped_values.items() if not pd.isna(v)} #Filters out NA values
     
     # Get min and max of clamped values
@@ -146,7 +146,7 @@ def main():
         color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain N and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
