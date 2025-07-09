@@ -11,7 +11,7 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/QC_dev_data/BARD1.scores.eval.tsv' #File of SGE scores
+sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx' #File of SGE scores
 region = 'ARD' #Structured BARD1 regions to create surface for
 chain = 'A' #Specify chain to color 
 
@@ -34,7 +34,7 @@ def region_residues(region): #Takes region input and creates the respective resi
     return region_residues
 
 def read_scores(file, region_resi): #Reads score file
-    df = pd.read_csv(file, sep = '\t')
+    df = pd.read_excel(file)
     
     df = df.rename(columns = {'simplified_consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
     df = df.loc[df['Consequence'].str.contains('missense_variant')] #Filters only for missense variants
@@ -56,7 +56,7 @@ def group_scores(df): #Groups variant scores by AA position and creates calculat
     
     min_scores = min_scores.set_index('AApos')['snv_score'].to_dict() #Turns min scores dataframe into dictionary for coloring
     mean_scores = mean_scores.set_index('AApos')['snv_score'].to_dict() #Turns mean scores dataframe into dictionnary for coloring
-    
+  
     return min_scores, mean_scores
 
 

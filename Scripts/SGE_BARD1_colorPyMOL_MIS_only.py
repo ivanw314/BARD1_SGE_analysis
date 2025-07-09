@@ -10,7 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 
 #User-provided inputs
 region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
-analysis = 'mean' #mininum or mean score used for coloring (min, mean)
+analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx' #SGE Score file
 
 
@@ -146,7 +146,7 @@ def main():
         color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
