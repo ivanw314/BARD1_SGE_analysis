@@ -9,9 +9,9 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'RING' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update.tsv' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
@@ -25,12 +25,12 @@ brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(21472
 #Region Offsets (What amino acid residue does the structure start in PyMOL?)
 ring_offset = 26
 ard_offset = 425
-brct_offset = 566
+brct_offset = 568
 
 
 
 def read_scores(file): #Reads and filters the score files
-    excel = pd.read_csv(file, sep = '\t') #Reads TSV file into df
+    excel = pd.read_excel(file) #Reads TSV file into df
     excel = excel.rename(columns = {'simplified_consequence': 'Consequence', 'score': 'snv_score'})
     data = excel[['exon','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
@@ -56,10 +56,10 @@ def pull_scores(data, regions): #Filters for missense scores
     for start, end in regions: #loop that creates the coordinates for all codons
         for i in range(start, end + 1):
             coords.append(i)
-            
+    coords.sort(reverse = True)
     #filters data for missense only and only within the specified coordinates. Will include multi-consequence variants
     filtered = data[data['pos'].isin(coords) & data['Consequence'].str.contains('missense')] 
-    
+    #print(filtered)
     filtered = filtered.reset_index(drop = True) #resets index to look nice
 
     codon_num = int(len(coords) / 3) #Gets number of codons
@@ -140,13 +140,13 @@ def main():
     filtered, num, coords = pull_scores(data, region_coords) #Gets filtered scores
     residue_values = make_residue_values(filtered, num, coords, offset, analysis) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
-    
+    print(residue_values)
     #this block does the coloring
     for residue, value in normalized_values.items(): 
         color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
