@@ -10,14 +10,15 @@ bard1_cutoffs = [-3.438968 * 0.028675 + 0.009242,-3.018904 * 0.028675 + 0.009242
 brca1_cutoffs = [-1.328,-0.748]
 
 type = 'min_NP'  # 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+chain_info = {'BARD1': 'B', 'BRCA1': 'A'}   #Specify chain identifiers for BARD1 and BRCA1
 
-def read_process_data(bard1_file, brca1_file, type):
+def read_process_data(bard1_file, brca1_file, type, chains=chain_info):
     bard1_data = pd.read_excel(bard1_file)
     brca1_data = pd.read_excel(brca1_file)
 
     #Helix residues for BARD1: [34, 48] and [98, 117]
     #Helix residues for BRCA1: [7, 22] and [80, 97]
-    bard1_helix_residues = list(range(34, 48)) + list(range(98, 118))
+    bard1_helix_residues = list(range(26, 48)) + list(range(98, 123))
     brca1_helix_residues = list(range(7, 23)) + list(range(80, 98))
 
     bard1_data = bard1_data.rename(columns = {'simplified_consequence': 'Consequence'})
@@ -80,15 +81,15 @@ def read_process_data(bard1_file, brca1_file, type):
     bard1_normal_residues = bard1_normal['AApos'].astype(int).tolist()
     brca1_normal_residues = brca1_normal['AApos'].astype(int).tolist()
 
-    to_return = {'BARD1_abnormal': (bard1_abnormal_residues,'B'),
-                 'BARD1_normal': (bard1_normal_residues, 'B'),
-                 'BRCA1_abnormal': (brca1_abnormal_residues, 'A'),
-                 'BRCA1_normal': (brca1_normal_residues, 'A'),
+    to_return = {'BARD1_abnormal': (bard1_abnormal_residues, chain_info['BARD1']),
+                 'BARD1_normal': (bard1_normal_residues, chain_info['BARD1']),
+                 'BRCA1_abnormal': (brca1_abnormal_residues, chain_info['BRCA1']),
+                 'BRCA1_normal': (brca1_normal_residues, chain_info['BRCA1']),
                }
 
     return to_return
 
-def generate_selection_string(residues, selection="(all)"):
+def generate_selection_string(residues, selection="(all)", chain = chain_info):
     """
     Generate a PyMOL selection string for the specified residues.
     Parameters:
@@ -98,7 +99,9 @@ def generate_selection_string(residues, selection="(all)"):
     """
     # Hide all sticks and resets color first
     cmd.hide("sticks", selection)
-    cmd.color('green', selection)
+    all_chains = list(chain_info.values())
+    chain_str = "+".join(all_chains)  # Results in "B+A"
+    cmd.color('green', f'{selection} and chain {chain_str}')
 
     objects = cmd.get_object_list()
     print(f"Available objects: {objects}")
@@ -131,8 +134,10 @@ def generate_selection_string(residues, selection="(all)"):
         cmd.color(color, sel_name)
         
         # Optional: print for debugging
+        '''
         print(f"Selection '{sel_name}': {sel_string}")
         print(f"Number of atoms selected: {cmd.count_atoms(sel_name)}")
+        '''
 
 def main():
     helix_residues = read_process_data(bard1_file, brca1_file, type)
