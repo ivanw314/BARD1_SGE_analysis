@@ -1,6 +1,5 @@
 
 import pandas as pd
-from matplotlib.colors import LinearSegmentedColormap
 from pymol import cmd
 
 bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx'
@@ -102,9 +101,6 @@ def generate_selection_string(residues, selection="(all)", chain = chain_info):
     all_chains = list(chain_info.values())
     chain_str = "+".join(all_chains)  # Results in "B+A"
     cmd.color('green', f'{selection} and chain {chain_str}')
-
-    objects = cmd.get_object_list()
-    print(f"Available objects: {objects}")
     
     for key in residues.keys():
         resi_list, chain = residues[key]
@@ -130,7 +126,7 @@ def generate_selection_string(residues, selection="(all)", chain = chain_info):
         cmd.select(sel_name, sel_string)
         
         # Show sticks and color
-        #cmd.show("sticks", sel_name)
+        cmd.show("sticks", sel_name)
         cmd.color(color, sel_name)
         
         # Optional: print for debugging
