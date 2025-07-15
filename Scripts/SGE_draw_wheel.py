@@ -13,18 +13,7 @@ brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA
 type = 'min_NP'  # 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
 pd.options.mode.chained_assignment = None
 
-def generate_wheel_coordinates(n):
-    x_center = []
-    y_center = []
-    num_residues = n  # Maximum number of residues
-    for i in range(n):
-        # Start at 90° (top) and go clockwise (-100° each step)
-        angle = (90 - i * 100) * np.pi / 180
-        x = np.cos(angle) * 0.85  # 0.85 is the radius from the original
-        y = np.sin(angle) * 0.85
-        x_center.append(x)
-        y_center.append(y)
-    return np.array(x_center), np.array(y_center), num_residues
+
 
 def draw_wheel(sequence, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False):
     "draw helix"
@@ -226,10 +215,25 @@ def read_process_data(bard1_file, brca1_file, type):
 
 
     print(final_dfs)
+    dict_keys = list(final_dfs.keys())
+    return final_dfs, dict_keys
 
-    return final_dfs
+def generate_wheel_coordinates(dict):
 
-def missense_draw_wheel(sequence, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False):
+    n = len(dict)   
+    x_center = []
+    y_center = []
+    num_residues = n  # Maximum number of residues
+    for i in range(n):
+        # Start at 90° (top) and go clockwise (-100° each step)
+        angle = (90 - i * 100) * np.pi / 180
+        x = np.cos(angle) * 0.85  # 0.85 is the radius from the original
+        y = np.sin(angle) * 0.85
+        x_center.append(x)
+        y_center.append(y)
+    return np.array(x_center), np.array(y_center), num_residues
+
+def missense_draw_wheel(sequence, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False): #Make sequence a list of the things with coords
     "draw helix"
     min_num = 2
     max_num = num_residues
@@ -317,12 +321,17 @@ def missense_draw_wheel(sequence, num_residues, x_array,  y_array, colors = ["gr
     return fig, ax
 
 def main():
-    helical_dicts = read_process_data(bard1_file, brca1_file, type = 'min_NP')
-    seq = input("Enter the sequence: ")
-    num_residues = len(seq)
-
-    x_center, y_center, num_residues = generate_wheel_coordinates(num_residues)
-    error_return = draw_wheel(seq, num_residues, x_center, y_center, legend=False, labels=True)
-    print(error_return)
+    helical_dicts, helices = read_process_data(bard1_file, brca1_file, type = 'min_NP')
+    #seq = input("Enter the sequence: ")
+    #num_residues = len(seq)
+    
+    for helix in helices:
+        x_center, y_center, num_residues = generate_wheel_coordinates(helical_dicts[helix])
+        seq_list = list(helical_dicts[helix].keys())
+        print(x_center, y_center, num_residues)
+        print(seq_list)
+    #x_center, y_center, num_residues = generate_wheel_coordinates(num_residues)
+    #error_return = draw_wheel(seq, num_residues, x_center, y_center, legend=False, labels=True)
+    #print(error_return)
 
 main()
