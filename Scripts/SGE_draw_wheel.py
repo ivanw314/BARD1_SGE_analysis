@@ -10,6 +10,7 @@ pd.options.mode.chained_assignment = None
 def generate_wheel_coordinates(n):
     x_center = []
     y_center = []
+    num_residues = n  # Maximum number of residues
     for i in range(n):
         # Start at 90° (top) and go clockwise (-100° each step)
         angle = (90 - i * 100) * np.pi / 180
@@ -17,15 +18,12 @@ def generate_wheel_coordinates(n):
         y = np.sin(angle) * 0.85
         x_center.append(x)
         y_center.append(y)
-    return np.array(x_center), np.array(y_center)
+    return np.array(x_center), np.array(y_center), num_residues
 
-x_center, y_center = generate_wheel_coordinates(30)
-#print('y_center:', y_center)
-
-def draw_wheel(sequence, x_array = x_center, y_array = y_center, colors = ["gray", "yellow", "blue", "red"], labels = True, labelcolor = "black", legend = False):
+def draw_wheel(sequence, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False):
     "draw helix"
     min_num = 2
-    max_num = 30
+    max_num = num_residues
     num_colors = 4
     num_resid = len(sequence)
     # 0 = hydrophobic, 1 = polar, 2 = basic, 3 = acidic
@@ -106,7 +104,12 @@ def draw_wheel(sequence, x_array = x_center, y_array = y_center, colors = ["gray
     return fig, ax
 
 
+def main():
+    seq = input("Enter the sequence: ")
+    num_residues = len(seq)
 
-print(len('WAHSRAALDCTHIHILITHITHTIHTIHIT'))
-test = draw_wheel('WAHSRAALDCTHIHILITHITHTIHTIHIT', x_array=x_center, y_array=y_center)
-#print(test)
+    x_center, y_center, num_residues = generate_wheel_coordinates(num_residues)
+    test = draw_wheel(seq, num_residues, x_center, y_center, legend=True)
+    print(test)
+    
+main()
