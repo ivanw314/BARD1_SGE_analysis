@@ -83,7 +83,7 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
         to_return['median_consequence'] = 1 #Sets default function to 1 (indeterminate) (color to yellow)
         to_return.loc[to_return['score'] <= bard1_cutoffs[0], 'median_consequence'] = 3 #Sets low score variants to abnormal color to red
         to_return.loc[to_return['score'] >= bard1_cutoffs[1], 'median_consequence'] = 2 #Sets high score variatns to normal, color to blue
-        to_return['AApos'] = to_return['AApos'].astype(int) #Converts amino acid position to integer
+        to_return['AApos'] = to_return['AApos'].astype(int) #Converts amino acid position to integer for sorting
         to_return.sort_values(by='AApos', inplace=True) #Sorts in ascending order by amino acid position
 
         if helix_list[i] ==  'helix_2': #2nd helix should be sorted in descending order
