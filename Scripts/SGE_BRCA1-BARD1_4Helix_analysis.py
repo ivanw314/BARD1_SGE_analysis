@@ -114,6 +114,8 @@ def generate_selection_string(residues, selection="(all)", chain = chain_info): 
     for key in residues.keys():
         resi_list, chain = residues[key]
         
+        if len(resi_list) == 0: #Added to handle cases where no residues are found
+            continue
         # Create residue selection string
         resi_str = '+'.join(str(res) for res in resi_list)
         
@@ -146,6 +148,7 @@ def generate_selection_string(residues, selection="(all)", chain = chain_info): 
 
 def main():
     helix_residues = read_process_data(bard1_file, brca1_file, type)
+
     generate_selection_string(helix_residues)
 
 main()
