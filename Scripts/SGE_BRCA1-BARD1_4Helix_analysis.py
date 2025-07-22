@@ -19,7 +19,7 @@ def read_process_data(bard1_file, brca1_file, type, chains=chain_info):
     #Helix residues for BRCA1: [7, 22] and [80, 97]
     bard1_helix_residues = list(range(26, 48)) + list(range(98, 123)) #BARD1 helix residues
     brca1_helix_residues = list(range(7, 23)) + list(range(80, 98)) #BRCA1 helix residues
-
+ 
     bard1_data = bard1_data.rename(columns = {'simplified_consequence': 'Consequence'}) #Renames column for consistency
     brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renames column for consistency
     bard1_data = bard1_data.loc[bard1_data['Consequence'].isin(['missense_variant'])] #Pulls only missense variants for BARD1
@@ -31,19 +31,32 @@ def read_process_data(bard1_file, brca1_file, type, chains=chain_info):
     bard1_data = bard1_data.loc[bard1_data['AApos'].astype(int).isin(bard1_helix_residues)] #pulls helix residues for BARD1
     brca1_data = brca1_data.loc[brca1_data['AApos'].astype(int).isin(brca1_helix_residues)] #pulls helix residues for BRCA1
 
+    bard1_data['AAog'] = bard1_data['amino_acid_change'].transform(lambda x: x[0]) #Gets original amino acid for BARD1
+    brca1_data['AAog'] = brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][0:3]) #Gets original amino acid for BRCA1
+    bard1_data['AAsub'] = bard1_data['amino_acid_change'].transform(lambda x: x[-1]) #Gets amino acid substitution for BARD1
+    brca1_data['AAsub'] = brca1_data['hgvs_pro'].transform(lambda x: x[-3:]) #Gets amino acid substitution for BRCA1
+
+    ''' Block to extract data from helix residues and save to Excel files
+    brca1_data['functional_consequence'] = 'indeterminate'
+    brca1_data.loc[brca1_data['score'] <= brca1_cutoffs[0], 'functional_consequence'] = 'functionally_abnormal'
+    brca1_data.loc[brca1_data['score'] >= brca1_cutoffs[1], 'functional_consequence'] = 'functionally_normal'
+
+    genes = [('BARD1', bard1_data), ('BRCA1', brca1_data)]  #List of genes to be used for filtering
+    for gene, data in genes:
+        file_name = '/Users/ivan/Desktop/test_excel_outputs/20250722_' + gene + '_helix_residues.xlsx'
+        data.to_excel(file_name, index=False)
+
+    '''
     #Aggregate data based on the specified type
     if type == 'min':
         bard1_collapsed = bard1_data.groupby('AApos').agg({'score': 'min'}).reset_index()
         brca1_collapsed = brca1_data.groupby('AApos').agg({'score': 'min'}).reset_index()
-
+ 
     elif type == 'mean':
         bard1_collapsed = bard1_data.groupby('AApos').agg({'score': 'mean'}).reset_index()
         brca1_collapsed = brca1_data.groupby('AApos').agg({'score': 'mean'}).reset_index()
 
     elif type == 'min_NP':
-        bard1_data['AAsub'] = bard1_data['amino_acid_change'].transform(lambda x: x[-1])
-        brca1_data['AAsub'] = brca1_data['hgvs_pro'].transform(lambda x: x[-3:])
-        
         bard1_data = bard1_data.loc[bard1_data['AAsub'] != 'P']
         brca1_data = brca1_data.loc[brca1_data['AAsub'] != 'Pro']
 
@@ -51,9 +64,6 @@ def read_process_data(bard1_file, brca1_file, type, chains=chain_info):
         brca1_collapsed = brca1_data.groupby('AApos').agg({'score': 'min'}).reset_index()
 
     elif type == 'mean_NP':
-        bard1_data['AAsub'] = bard1_data['amino_acid_change'].transform(lambda x: x[-1])
-        brca1_data['AAsub'] = brca1_data['hgvs_pro'].transform(lambda x: x[-3:])
-        
         bard1_data = bard1_data.loc[bard1_data['AAsub'] != 'P']
         brca1_data = brca1_data.loc[brca1_data['AAsub'] != 'Pro']
 
