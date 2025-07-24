@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as pltcol
 import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colorbar import Colorbar
+import matplotlib.cm as cm
 
 #Helical wheel code originally adapted from: Helixvis https://doi.org/10.21105/joss.01008 
 # BARD1 and BRCA1 cutoffs for functional classification
@@ -191,7 +193,8 @@ def gradient_color(helical_dict, stats_dict, norm_type):
 
     #print(to_color)
 
-    return to_color
+    return to_color, custom_cmap
+
 def generate_wheel_coordinates(dict): #Generates coordinates for the helical wheel plot based on length of sequence
 
     n = len(dict)  #Number of residues from length of the dictionary 
@@ -207,112 +210,125 @@ def generate_wheel_coordinates(dict): #Generates coordinates for the helical whe
         y_center.append(y)
     return np.array(x_center), np.array(y_center), num_residues
 
-def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False): #Draws the helical wheel plot for a given sequence
-    "draw helix"
-    min_num = 2 # Minimum number of residues
-    max_num = num_residues # Maximum number of residues
-    num_colors = 4
-    num_resid = len(sequence) # Length of the sequence
 
-    residues = resi_dict # Dictionary of residues with their corresponding colors based on aggregated functional consequence
-    residue_keys = list(residues.keys()) # List of residue keys
-
+def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_array, y_array, 
+                       stats_dict, norm_type, custom_cmap, colors=["gray", "yellow", "blue", "red"], 
+                       labels=False, labelcolor="black", legend=False):
+    """draw helix with colorbar"""
+    
+    # Your existing code for setting up the wheel
+    num_resid = len(sequence)
+    residues = resi_dict
+    residue_keys = list(residues.keys())
+    
     colors = []
     for key in residue_keys:
-        colors.append(residues[key]) # Appends the colors for each residue based on the functional consequence
-
-    '''
-    #Error checking
-    if num_resid not in range(min_num, max_num + 1):
-        return "ERROR: sequence must have between 2 and 18 (inclusive) characters."
-    if len(colors) != 4:
-        return "ERROR: parameter `colors` has missing or too many colors."
-    for i in range(len(colors)):
-        if colors[i] not in pltcol.cnames:
-            return "ERROR: parameter `colors` has invalid colors." 
-
-    '''
-
-    #Builds helical wheel
+        colors.append(residues[key])
+    
+    # Builds helical wheel
     x_center = x_array
     y_center = y_array
     x_center = x_center/2 + 0.5
     y_center = y_center/2 + 0.5
     circle_radius = 0.0725
+    
     circle_data = pd.DataFrame(data={'x': x_center[0:num_resid], 
-        'y': y_center[0:num_resid], 'type': range(num_resid)}
-        )
-    circle_data['color'] = pd.Series(dtype = 'object')
+        'y': y_center[0:num_resid], 'type': range(num_resid)})
+    circle_data['color'] = pd.Series(dtype='object')
+    
     for i in range(num_resid):
         if sequence[i] not in residues:
             return "ERROR: " + sequence[i] + " is not a valid one-letter code for an amino acid."
-        
         circle_data['type'][i] = 0
-        
         circle_data.at[i, 'color'] = colors[i]
-        #circle_data['color'][i] = 3
-        
+    
     segment_data = pd.DataFrame(data={'xstart': x_center[0:num_resid - 1], 
         'ystart': y_center[0:num_resid - 1], 'xend': x_center[1:num_resid], 
         'yend': y_center[1:num_resid]})
     
-    fig, ax = plt.subplots()
+    # Create figure with GridSpec for better control
+    fig = plt.figure(figsize=(8, 6))
+    gs = fig.add_gridspec(1, 2, width_ratios=[5, 1], hspace=0.05)
+    ax = fig.add_subplot(gs[0, 0])
+    ax_cb = fig.add_subplot(gs[0, 1])
+    
+    # Draw the helical wheel (your existing drawing code)
     for i in range(num_resid - 1):
-        plt.plot([segment_data['xstart'][i], segment_data['xend'][i]], [segment_data['ystart'][i], segment_data['yend'][i]], 'ro-', color = 'black')
-        
+        ax.plot([segment_data['xstart'][i], segment_data['xend'][i]], 
+                [segment_data['ystart'][i], segment_data['yend'][i]], 
+                'ro-', color='black')
+    
     for i in range(num_resid):
-        circle = plt.Circle((circle_data['x'][i], circle_data['y'][i]), circle_radius, clip_on = False, zorder = 10, facecolor= circle_data['color'][i], edgecolor = 'black')
+        circle = plt.Circle((circle_data['x'][i], circle_data['y'][i]), 
+                           circle_radius, clip_on=False, zorder=10, 
+                           facecolor=circle_data['color'][i], edgecolor='black')
         ax.add_artist(circle)
         if labels:
             if helix_name == 'bard1_helix_1':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = 120, ha="center", va = "center", color = labelcolor)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), 
+                           zorder=15, fontsize=10, rotation=120, ha="center", va="center", color=labelcolor)
             elif helix_name == 'bard1_helix_2' or helix_name == 'brca1_helix_1':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = -90, ha="center", va = "center", color = labelcolor)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), 
+                           zorder=15, fontsize=10, rotation=-90, ha="center", va="center", color=labelcolor)
             elif helix_name == 'brca1_helix_2':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = 180, ha="center", va = "center", color = labelcolor)
-    if legend:
-        restypes = set(circle_data['type'])
-        handleid = []
-        nonpolar = mpatches.Patch(color = colors[0], label = 'hydrophobic')
-        polar = mpatches.Patch(color = colors[1], label = 'polar')
-        basic = mpatches.Patch(color = colors[2], label = 'basic')
-        acidic = mpatches.Patch(color = colors[3], label = 'acidic')
-        if 0 in restypes:
-            handleid = [nonpolar]
-            
-        if 1 in restypes:
-            if bool(handleid):
-                handleid.append(polar)
-            else:
-                handleid = [polar]
-                
-        if 2 in restypes:
-            if bool(handleid):
-                handleid.append(basic)
-            else:
-                handleid = [basic]
-        
-        if 3 in restypes:
-            if bool(handleid):
-                handleid.append(acidic)
-            else:
-                handleid = [acidic]
-                
-        plt.legend(handles = handleid, loc='center left', bbox_to_anchor=(1.04, 0.5))
-        
-    plt.axis('off')
-    plt.title(helix_name, 
-              fontsize=12,
-              y = 1.05)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), 
+                           zorder=15, fontsize=10, rotation=180, ha="center", va="center", color=labelcolor)
+    
+    # Set up main plot
+    ax.axis('off')
+    ax.set_title(helix_name, fontsize=12, y=1.05)
     ax.set_aspect('equal')
+    
+    # Add colorbar using the modern approach
+    # Determine which gene this helix belongs to
+    gene = 'bard1' if 'bard1' in helix_name else 'brca1'
+    mean, stdev, min_val, max_val = stats_dict[gene]
+    
+    # Set normalization bounds based on norm_type
+    if norm_type == 'minmax':
+        vmin, vmax = min_val, max_val
+    elif norm_type == 'stdev':
+        vmin, vmax = mean - 1*stdev, mean + 1*stdev
+
+    custom_cmap = custom_cmap.reversed() #Reverses color map
+    
+    # Create a ScalarMappable for the colorbar
+    norm = pltcol.Normalize(vmin=vmin, vmax=vmax)
+    sm = cm.ScalarMappable(norm=norm, cmap=custom_cmap)
+    sm.set_array([])
+    
+    # Create colorbar
+    cb = plt.colorbar(sm, cax=ax_cb, orientation='vertical')
+    
+    # Customize colorbar
+    cb.set_label('SGE Score', fontsize=10, rotation=270, labelpad=15)
+    
+    # Add reference lines
+    cb.ax.axhline(mean, color='black', linestyle='--', linewidth=1)
+    
+    # Set custom tick labels
+    if norm_type == 'stdev':
+        tick_positions = [mean - stdev, mean, mean + stdev]
+        tick_labels = ['-1σ', 'μ', '+1σ']
+        cb.set_ticks(tick_positions)
+        cb.set_ticklabels(tick_labels)
+    else:
+        # For minmax, show 5 evenly spaced values
+        cb.locator = plt.MaxNLocator(5)
+    
+    # Add gene name to colorbar
+    cb.ax.text(0.5, 1.02, gene.upper(), ha='center', va='bottom', 
+               transform=cb.ax.transAxes, fontsize=8)
+    
+    #plt.tight_layout()
     plt.show()
-    #fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
-    #fig.show()
+    #fig.savefig(path + helix_name + '_with_colorbar.png', bbox_inches='tight', dpi=500, transparent=True)
+    
     return fig, ax
 
 def main():
     helical_dicts, uncategorized_dicts, stats, helices = read_process_data(bard1_file, brca1_file, type = analysis_type)
-    to_color = gradient_color(uncategorized_dicts, stats, norm_type = normalization_type)
+    to_color, custom_cmap = gradient_color(uncategorized_dicts, stats, norm_type = normalization_type)
 
 
     for helix in helices:
@@ -320,7 +336,10 @@ def main():
         x_center, y_center, num_residues = generate_wheel_coordinates(helix_dict)
         seq_list = list(helix_dict.keys())
         #print(helix, helix_dict)
-        missense_draw_wheel(seq_list, path, helix_dict, helix, num_residues, x_center, y_center, labels = True)
+        
+        missense_draw_wheel(seq_list, path, helix_dict, helix, num_residues, 
+                          x_center, y_center, stats, normalization_type, 
+                          custom_cmap, labels=True)
 
 
 main()
