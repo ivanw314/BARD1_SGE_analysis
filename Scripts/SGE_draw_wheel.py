@@ -15,7 +15,7 @@ brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA
 
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/4helix_helical_wheels/'
-type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+analysis_type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
 pd.options.mode.chained_assignment = None
 
 def read_process_data(bard1_file, brca1_file, type): #Reads and processes the data from the BARD1 and BRCA1 files
@@ -232,13 +232,13 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               fontsize=12,
               y = 1.05)
     ax.set_aspect('equal')
-    #plt.show()
-    fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
+    plt.show()
+    #fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
 def main():
-    helical_dicts, helices = read_process_data(bard1_file, brca1_file, type = 'min_NP')
+    helical_dicts, helices = read_process_data(bard1_file, brca1_file, type = analysis_type)
     
     for helix in helices:
         helix_dict = helical_dicts[helix]
