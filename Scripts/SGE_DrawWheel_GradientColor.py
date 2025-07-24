@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltcol
 import matplotlib.patches as mpatches
+from matplotlib.colors import LinearSegmentedColormap
 
 #Helical wheel code originally adapted from: Helixvis https://doi.org/10.21105/joss.01008 
 # BARD1 and BRCA1 cutoffs for functional classification
@@ -15,7 +16,7 @@ brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA
 
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/4helix_helical_wheels/'
-type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+type = 'mean_NP'  # Type of analysis. 'min', 'median', 'min_NP', 'median_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
 pd.options.mode.chained_assignment = None
 
 def read_process_data(bard1_file, brca1_file, type): #Reads and processes the data from the BARD1 and BRCA1 files
@@ -54,7 +55,21 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
     brca1_data['amino_acid'] = brca1_data['amino_acid'].map(aa_3to1) #Remaps the 3-letter amino acid code to 1-letter code
     brca1_data['amino_acid'] = brca1_data['amino_acid'] + brca1_data['AApos'] #Gets the full amino acid with position
 
+    bard1_mean = bard1_data['score'].mean() #Calculates the mean helix score for BARD1
+    brca1_mean = brca1_data['score'].mean() #Calculates the mean helix score for BRCA1
+
+    bard1_stdev =  bard1_data['score'].std()
+    bard1_min = bard1_data['score'].min() #Calculates the minimum helix score for BARD1
+    bard1_max = bard1_data['score'].max() #Calculates the maximum helix score for BARD1
+
+    brca1_stdev = brca1_data['score'].std() #Calculates 2 standard deviations for BARD1 and BRCA1 helix scores
+    brca1_min = brca1_data['score'].min() #Calculates the minimum helix score for BRCA1
+    brca1_max = brca1_data['score'].max() #Calculates the maximum helix score for BRCA1
+
+
     final_dfs = {} #Dicitonary to store final dictionaries for each helix
+    uncategorized_dfs = {} #Dictionary to store uncategorized dictionaries for each helix
+    stats_dict = {'bard1': (bard1_mean, bard1_stdev, bard1_min, bard1_max), 'brca1': (brca1_mean, brca1_stdev, brca1_min, brca1_max)} #Dictionary to store statistics for BARD1 and BRCA1
     helix_list = ['helix_1', 'helix_2'] #List for iteration over helix names
 
     i = 0
@@ -66,18 +81,18 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
         if type == 'min':
             to_return = data.groupby('AApos').agg({'score': 'min',
                                                    'amino_acid': 'first'}).reset_index()
-        elif type == 'mean':
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+        elif type == 'median':
+            to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
         elif type == 'min_NP':
             data['AAsub'] = data['amino_acid_change'].transform(lambda x: x[-1])
             data = data.loc[data['AAsub'] != 'P']
             to_return = data.groupby('AApos').agg({'score': 'min',
                                                    'amino_acid': 'first'}).reset_index()
-        elif type == 'mean_NP':
+        elif type == 'median_NP':
             data['AAsub'] = data['amino_acid_change'].transform(lambda x: x[-1])
             data = data.loc[data['AAsub'] != 'P']
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+            to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
 
         to_return['median_consequence'] = 1 #Sets default function to 1 (indeterminate) (color to yellow)
@@ -89,8 +104,10 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
         if helix_list[i] ==  'helix_2': #2nd helix should be sorted in descending order
             to_return.sort_values(by='AApos', ascending=False, inplace=True)
 
-        to_return = dict(zip(to_return['amino_acid'], to_return['median_consequence'])) #Zips and returns a dictionary with amino acid as key and median consequence as value
-        final_dfs['bard1_' + helix_list[i]] = to_return #Adds the dictionary to the final_dfs dictionary with key as 'bard1_' + helix name
+        to_return_dict = dict(zip(to_return['amino_acid'], to_return['median_consequence'])) #Zips and returns a dictionary with amino acid as key and median consequence as value
+
+        final_dfs['bard1_' + helix_list[i]] = to_return_dict #Adds the dictionary to the final_dfs dictionary with key as 'bard1_' + helix name
+        uncategorized_dfs['bard1_' + helix_list[i]] = to_return #Adds the uncategorized dictionary to the uncategorized_dfs dictionary with key as 'bard1_' + helix name
         i += 1
     
     i = 0 
@@ -101,18 +118,18 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
         if type == 'min':
             to_return = data.groupby('AApos').agg({'score': 'min',
                                                    'amino_acid': 'first'}).reset_index()
-        elif type == 'mean':
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+        elif type == 'median':
+            to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
         elif type == 'min_NP':
             data['AAsub'] = data['hgvs_pro'].transform(lambda x: x[-3:])
             data = data.loc[data['AAsub'] != 'Pro']
             to_return = data.groupby('AApos').agg({'score': 'min',
                                                    'amino_acid': 'first'}).reset_index()
-        elif type == 'mean_NP':
+        elif type == 'median_NP':
             data['AAsub'] = data['hgvs_pro'].transform(lambda x: x[-3:])
             data = data.loc[data['AAsub'] != 'Pro']
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+            to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
 
         to_return['median_consequence'] = 1
@@ -123,14 +140,42 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
         to_return.sort_values(by='AApos', inplace=True)
         if helix_list[i] ==  'helix_2':
             to_return.sort_values(by='AApos', ascending=False, inplace=True)
-        to_return = dict(zip(to_return['amino_acid'], to_return['median_consequence']))
+        to_return_dict = dict(zip(to_return['amino_acid'], to_return['median_consequence']))
 
-        final_dfs['brca1_' + helix_list[i]] = to_return
+
+        final_dfs['brca1_' + helix_list[i]] = to_return_dict    
+        uncategorized_dfs['brca1_' + helix_list[i]] = to_return
         i += 1
 
     dict_keys = list(final_dfs.keys())
-    return final_dfs, dict_keys
+    return final_dfs,uncategorized_dfs,stats_dict, dict_keys
 
+def gradient_color(helical_dict, stats_dict):
+    colors = [(0, 0, 1.0), (1, 0, 0)]  # White -> Red
+    n_bins = 1000  # Number of bins for the colormap
+    cmap_name = 'gray_to_red'
+    custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
+
+    custom_cmap = plt.cm.viridis
+    stats_keys = list(stats_dict.keys())
+    helix_df_keys = list(helical_dict.keys())
+    to_color = {}
+    for gene in stats_keys: #Iterates over the genes (BARD1 and BRCA1)
+        mean, stdev, min, max = stats_dict[gene]
+        lwrbound = min #Calculates lower bound for the gradient color
+        uprbound = max #Calculates upper bound for the gradient color
+
+        for helix in helix_df_keys: #Iterates over the helix names
+            helix_df = helical_dict[helix] #Gets the helix dictionary for the current helix
+            #helix_df['normalized_score'] = np.interp(helix_df['score'], (lwrbound, uprbound), (0, 1)) #Normalizes the score for the gradient color
+            helix_df['normalized_score'] = helix_df['score'].apply(lambda x: (x - lwrbound) / (uprbound - lwrbound)) #Normalizes the score for the gradient color
+            print(helix_df)
+            helix_df['color'] = helix_df['normalized_score'].apply(lambda x: custom_cmap(1-x))
+            to_color[helix] = dict(zip(helix_df['amino_acid'], helix_df['color'])) #Creates a dictionary with amino acid as key and normalized score as value
+
+    #print(to_color)
+
+    return to_color
 def generate_wheel_coordinates(dict): #Generates coordinates for the helical wheel plot based on length of sequence
 
     n = len(dict)  #Number of residues from length of the dictionary 
@@ -154,7 +199,13 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     num_resid = len(sequence) # Length of the sequence
 
     residues = resi_dict # Dictionary of residues with their corresponding colors based on aggregated functional consequence
-        
+    residue_keys = list(residues.keys()) # List of residue keys
+
+    colors = []
+    for key in residue_keys:
+        colors.append(residues[key]) # Appends the colors for each residue based on the functional consequence
+
+    '''
     #Error checking
     if num_resid not in range(min_num, max_num + 1):
         return "ERROR: sequence must have between 2 and 18 (inclusive) characters."
@@ -164,6 +215,8 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
         if colors[i] not in pltcol.cnames:
             return "ERROR: parameter `colors` has invalid colors." 
 
+    '''
+
     #Builds helical wheel
     x_center = x_array
     y_center = y_array
@@ -171,14 +224,18 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     y_center = y_center/2 + 0.5
     circle_radius = 0.0725
     circle_data = pd.DataFrame(data={'x': x_center[0:num_resid], 
-        'y': y_center[0:num_resid], 'color': range(num_resid), 'type': range(num_resid)})
-
+        'y': y_center[0:num_resid], 'type': range(num_resid)}
+        )
+    circle_data['color'] = pd.Series(dtype = 'object')
     for i in range(num_resid):
         if sequence[i] not in residues:
             return "ERROR: " + sequence[i] + " is not a valid one-letter code for an amino acid."
-        circle_data['color'][i] = colors[residues[sequence[i]]]
-        circle_data['type'][i] = residues[sequence[i]]
-  
+        
+        circle_data['type'][i] = 0
+        
+        circle_data.at[i, 'color'] = colors[i]
+        #circle_data['color'][i] = 3
+        
     segment_data = pd.DataFrame(data={'xstart': x_center[0:num_resid - 1], 
         'ystart': y_center[0:num_resid - 1], 'xend': x_center[1:num_resid], 
         'yend': y_center[1:num_resid]})
@@ -188,7 +245,7 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
         plt.plot([segment_data['xstart'][i], segment_data['xend'][i]], [segment_data['ystart'][i], segment_data['yend'][i]], 'ro-', color = 'black')
         
     for i in range(num_resid):
-        circle = plt.Circle((circle_data['x'][i], circle_data['y'][i]), circle_radius, clip_on = False, zorder = 10, facecolor=circle_data['color'][i], edgecolor = 'black')
+        circle = plt.Circle((circle_data['x'][i], circle_data['y'][i]), circle_radius, clip_on = False, zorder = 10, facecolor= circle_data['color'][i], edgecolor = 'black')
         ax.add_artist(circle)
         if labels:
             if helix_name == 'bard1_helix_1':
@@ -232,19 +289,21 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               fontsize=12,
               y = 1.05)
     ax.set_aspect('equal')
-    #plt.show()
-    fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
+    plt.show()
+    #fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
 def main():
-    helical_dicts, helices = read_process_data(bard1_file, brca1_file, type = 'min_NP')
-    
+    helical_dicts, uncategorized_dicts, stats, helices = read_process_data(bard1_file, brca1_file, type = 'median_NP')
+    to_color = gradient_color(uncategorized_dicts, stats)
+
+
     for helix in helices:
-        helix_dict = helical_dicts[helix]
-        x_center, y_center, num_residues = generate_wheel_coordinates(helical_dicts[helix])
-        seq_list = list(helical_dicts[helix].keys())
-        print(helix, helix_dict)
+        helix_dict = to_color[helix]
+        x_center, y_center, num_residues = generate_wheel_coordinates(helix_dict)
+        seq_list = list(helix_dict.keys())
+        #print(helix, helix_dict)
         missense_draw_wheel(seq_list, path, helix_dict, helix, num_residues, x_center, y_center, labels = True)
 
 
