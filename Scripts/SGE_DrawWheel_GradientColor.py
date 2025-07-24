@@ -16,7 +16,8 @@ brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA
 
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/4helix_helical_wheels/'
-type = 'mean_NP'  # Type of analysis. 'min', 'median', 'min_NP', 'median_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+analysis_type = 'median_NP'  # Type of analysis. 'min', 'median', 'min_NP', 'median_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+normalization_type = 'stdev' #Normalization type for color gradient. 'minmax' for min-max normalization based on 5th and 95th percentiles, 'stdev' for standard deviation normalization
 pd.options.mode.chained_assignment = None
 
 def read_process_data(bard1_file, brca1_file, type): #Reads and processes the data from the BARD1 and BRCA1 files
@@ -59,17 +60,16 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
     brca1_mean = brca1_data['score'].mean() #Calculates the mean helix score for BRCA1
 
     bard1_stdev =  bard1_data['score'].std()
-    bard1_min = bard1_data['score'].min() #Calculates the minimum helix score for BARD1
-    bard1_max = bard1_data['score'].max() #Calculates the maximum helix score for BARD1
-
     brca1_stdev = brca1_data['score'].std() #Calculates 2 standard deviations for BARD1 and BRCA1 helix scores
-    brca1_min = brca1_data['score'].min() #Calculates the minimum helix score for BRCA1
-    brca1_max = brca1_data['score'].max() #Calculates the maximum helix score for BRCA1
 
+    bard1_min = bard1_data['score'].quantile(0.05)
+    bard1_max = bard1_data['score'].quantile(0.95)
 
+    brca1_min = brca1_data['score'].quantile(0.05)
+    brca1_max = brca1_data['score'].quantile(0.95)
     final_dfs = {} #Dicitonary to store final dictionaries for each helix
     uncategorized_dfs = {} #Dictionary to store uncategorized dictionaries for each helix
-    stats_dict = {'bard1': (bard1_mean, bard1_stdev, bard1_min, bard1_max), 'brca1': (brca1_mean, brca1_stdev, brca1_min, brca1_max)} #Dictionary to store statistics for BARD1 and BRCA1
+
     helix_list = ['helix_1', 'helix_2'] #List for iteration over helix names
 
     i = 0
@@ -94,6 +94,8 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
             data = data.loc[data['AAsub'] != 'P']
             to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
+        else:
+            raise ValueError("Invalid type specified. Choose from 'min', 'median', 'min_NP', 'median_NP'.")
 
         to_return['median_consequence'] = 1 #Sets default function to 1 (indeterminate) (color to yellow)
         to_return.loc[to_return['score'] <= bard1_cutoffs[0], 'median_consequence'] = 3 #Sets low score variants to abnormal color to red
@@ -131,6 +133,8 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
             data = data.loc[data['AAsub'] != 'Pro']
             to_return = data.groupby('AApos').agg({'score': 'median',
                                                    'amino_acid': 'first'}).reset_index()
+        else:
+            raise ValueError("Invalid type specified. Choose from 'min', 'median', 'min_NP', 'median_NP'.")
 
         to_return['median_consequence'] = 1
         to_return.loc[to_return['score'] <= brca1_cutoffs[0], 'median_consequence'] = 3
@@ -142,36 +146,48 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
             to_return.sort_values(by='AApos', ascending=False, inplace=True)
         to_return_dict = dict(zip(to_return['amino_acid'], to_return['median_consequence']))
 
-
+        stats_dict = {'bard1': (bard1_mean, bard1_stdev, bard1_min, bard1_max), 'brca1': (brca1_mean, brca1_stdev, brca1_min, brca1_max)} #Dictionary to hold the statistics for each gene
         final_dfs['brca1_' + helix_list[i]] = to_return_dict    
         uncategorized_dfs['brca1_' + helix_list[i]] = to_return
         i += 1
 
     dict_keys = list(final_dfs.keys())
+
     return final_dfs,uncategorized_dfs,stats_dict, dict_keys
 
-def gradient_color(helical_dict, stats_dict):
-    colors = [(0, 0, 1.0), (1, 0, 0)]  # White -> Red
+def gradient_color(helical_dict, stats_dict, norm_type):
+    colors = [(1, 1, 1.0), (1, 0, 0)]  # White -> Red
     n_bins = 1000  # Number of bins for the colormap
     cmap_name = 'gray_to_red'
     custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
 
-    custom_cmap = plt.cm.viridis
+    #custom_cmap = plt.cm.Reds
     stats_keys = list(stats_dict.keys())
     helix_df_keys = list(helical_dict.keys())
     to_color = {}
     for gene in stats_keys: #Iterates over the genes (BARD1 and BRCA1)
         mean, stdev, min, max = stats_dict[gene]
-        lwrbound = min #Calculates lower bound for the gradient color
-        uprbound = max #Calculates upper bound for the gradient color
+
+        if norm_type == 'minmax':
+            lwrbound = min
+            uprbound = max
+        elif norm_type == 'stdev':
+            lwrbound = mean - 1*stdev #Calculates lower bound for the gradient color
+            uprbound = mean + 1*stdev #Calculates upper bound for the gradient color
 
         for helix in helix_df_keys: #Iterates over the helix names
-            helix_df = helical_dict[helix] #Gets the helix dictionary for the current helix
-            #helix_df['normalized_score'] = np.interp(helix_df['score'], (lwrbound, uprbound), (0, 1)) #Normalizes the score for the gradient color
-            helix_df['normalized_score'] = helix_df['score'].apply(lambda x: (x - lwrbound) / (uprbound - lwrbound)) #Normalizes the score for the gradient color
-            print(helix_df)
-            helix_df['color'] = helix_df['normalized_score'].apply(lambda x: custom_cmap(1-x))
-            to_color[helix] = dict(zip(helix_df['amino_acid'], helix_df['color'])) #Creates a dictionary with amino acid as key and normalized score as value
+            if gene in helix:
+                helix_df = helical_dict[helix] #Gets the helix dictionary for the current helix
+                if norm_type == 'stdev':
+                    helix_df['normalized_score'] = np.interp(helix_df['score'], (lwrbound, uprbound), (0, 1)) #Normalizes the score for the gradient color
+                elif norm_type == 'minmax':
+                    print(lwrbound, uprbound)
+                    helix_df['normalized_score'] = helix_df['score'].apply(lambda x: (x - lwrbound) / (uprbound - lwrbound)) #Normalizes the score for the gradient color
+                print(helix_df)
+                helix_df['color'] = helix_df['normalized_score'].apply(lambda x: custom_cmap(1-x))
+                to_color[helix] = dict(zip(helix_df['amino_acid'], helix_df['color'])) #Creates a dictionary with amino acid as key and normalized score as value
+            else:
+                continue
 
     #print(to_color)
 
@@ -295,8 +311,8 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     return fig, ax
 
 def main():
-    helical_dicts, uncategorized_dicts, stats, helices = read_process_data(bard1_file, brca1_file, type = 'median_NP')
-    to_color = gradient_color(uncategorized_dicts, stats)
+    helical_dicts, uncategorized_dicts, stats, helices = read_process_data(bard1_file, brca1_file, type = analysis_type)
+    to_color = gradient_color(uncategorized_dicts, stats, norm_type = normalization_type)
 
 
     for helix in helices:
