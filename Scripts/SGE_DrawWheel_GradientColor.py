@@ -322,7 +322,7 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     
     #plt.tight_layout()
     plt.show()
-    #fig.savefig(path + helix_name + '_with_colorbar.png', bbox_inches='tight', dpi=500, transparent=True)
+    fig.savefig(path + helix_name + '_with_colorbar.png', bbox_inches='tight', dpi=500, transparent=True)
     
     return fig, ax
 
