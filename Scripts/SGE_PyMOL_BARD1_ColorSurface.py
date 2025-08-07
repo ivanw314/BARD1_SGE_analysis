@@ -11,8 +11,8 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx' #File of SGE scores
-region = 'ARD' #Structured BARD1 regions to create surface for
+sge_scores = '/Users/ivan/Desktop//test_excel_outputs/20250807_202505BARD1scores_update_FILTERED_NoSplicing.xlsx' #File of SGE scores
+region = 'BRCT' #Structured BARD1 regions to create surface for
 chain = 'A' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers

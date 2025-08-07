@@ -9,9 +9,9 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'ARD' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx' #SGE Score file
+file = '/Users/ivan/Desktop//test_excel_outputs/20250807_202505BARD1scores_update_FILTERED_NoSplicing.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
