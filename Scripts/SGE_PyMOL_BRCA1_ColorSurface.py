@@ -228,7 +228,7 @@ def main():
     cmd.extend("color_surface_by_property", color_surface_by_property)
     
     #color_surface_by_property(property_dict = mean_scores, palette = 'rw', show_scale = True)
-    scores = [(residue_values,'SGE_surface_min')]
+    scores = [(residue_values,'SGE_BRCA1_surface_min')]
     
     for elem in scores:
         scores, surface_name = elem
