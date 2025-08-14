@@ -14,7 +14,7 @@ bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD
 brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA1_SGE_AllScores.xlsx'
 
 #Figure Saving Path
-path = '/Users/ivan/Desktop/BARD1_draft_figs/4helix_helical_wheels/'
+path = '/Users/ivan/Desktop/BARD1_draft_figs/'
 analysis_type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
 pd.options.mode.chained_assignment = None
 
@@ -146,7 +146,7 @@ def generate_wheel_coordinates(dict): #Generates coordinates for the helical whe
         y_center.append(y)
     return np.array(x_center), np.array(y_center), num_residues
 
-def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_array,  y_array, colors = ["gray", "yellow", "blue", "red"], labels = False, labelcolor = "black", legend = False): #Draws the helical wheel plot for a given sequence
+def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_array,  y_array, colors = ["gray", "yellow", "white", "red"], labels = False, labelcolor = "black", legend = False): #Draws the helical wheel plot for a given sequence
     "draw helix"
     min_num = 2 # Minimum number of residues
     max_num = num_residues # Maximum number of residues
@@ -233,7 +233,7 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               y = 1.05)
     ax.set_aspect('equal')
     plt.show()
-    #fig.savefig(path + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
+    fig.savefig(path + 'fig_5b_' + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
