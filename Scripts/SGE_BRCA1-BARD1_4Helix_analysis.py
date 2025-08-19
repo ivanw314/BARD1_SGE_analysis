@@ -2,10 +2,17 @@
 import pandas as pd
 from pymol import cmd
 
-bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx'
+bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250813_BARD1scores_final_FILTERED.xlsx'
+bard1_thresholds = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250813_BARD1_thresholds.tsv'
 brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA1_SGE_AllScores.xlsx'
 
-bard1_cutoffs = [-3.438968 * 0.028675 + 0.009242,-3.018904 * 0.028675 + 0.009242]
+
+threshold_df = pd.read_csv(bard1_thresholds, sep = '\t')
+
+lwr = threshold_df['lthresh'][0] * threshold_df['std_neut'][0] + threshold_df['#mu_neut'][0]
+uppr = threshold_df['uthresh'][0] * threshold_df['std_neut'][0] + threshold_df['#mu_neut'][0]
+
+bard1_cutoffs = [lwr, uppr]
 brca1_cutoffs = [-1.328,-0.748]
 
 type = 'min_NP'  # 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
@@ -20,7 +27,7 @@ def read_process_data(bard1_file, brca1_file, type, chains=chain_info):
     bard1_helix_residues = list(range(26, 48)) + list(range(98, 123)) #BARD1 helix residues
     brca1_helix_residues = list(range(7, 23)) + list(range(80, 98)) #BRCA1 helix residues
  
-    bard1_data = bard1_data.rename(columns = {'simplified_consequence': 'Consequence'}) #Renames column for consistency
+    bard1_data = bard1_data.rename(columns = {'consequence': 'Consequence'}) #Renames column for consistency
     brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renames column for consistency
     bard1_data = bard1_data.loc[bard1_data['Consequence'].isin(['missense_variant'])] #Pulls only missense variants for BARD1
     brca1_data = brca1_data.loc[brca1_data['Consequence'].isin(['missense_variant'])] #pulls only missense variants for BRCA1
