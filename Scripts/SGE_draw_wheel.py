@@ -6,11 +6,11 @@ import matplotlib.patches as mpatches
 
 #Helical wheel code originally adapted from: Helixvis https://doi.org/10.21105/joss.01008 
 # BARD1 and BRCA1 cutoffs for functional classification
-bard1_cutoffs = [-3.438968 * 0.028675 + 0.009242,-3.018904 * 0.028675 + 0.009242]
+
 brca1_cutoffs = [-1.328,-0.748]
 # File paths
 # Update these paths to the correct locations of your files
-bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250508_BARD1scores_update_FILTERED.xlsx'
+bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx'
 brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA1_SGE_AllScores.xlsx'
 
 #Figure Saving Path
@@ -18,7 +18,34 @@ path = '/Users/ivan/Desktop/BARD1_draft_figs/'
 analysis_type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
 pd.options.mode.chained_assignment = None
 
-def read_process_data(bard1_file, brca1_file, type): #Reads and processes the data from the BARD1 and BRCA1 files
+def get_bard1_thresholds(bard1_file):
+        # find the GMM thresholds
+    target_value = 0.950
+    bard1df = pd.read_excel(bard1_file)
+    # Calculate the absolute difference for the Normal (N) density
+    diffN = (bard1df['gmm_density_normal'] - target_value).abs()
+    # Find the index of the minimum difference
+    closest_index = diffN.idxmin()
+    # Retrieve the row with the closest value
+    closest_row_n = bard1df.loc[closest_index]
+
+    # now repeat that for the abnormal density
+    # Calculate the absolute difference
+    diffA = (bard1df['gmm_density_abnormal'] - target_value).abs()
+    # Find the index of the minimum difference
+    closest_index = diffA.idxmin()
+    # Retrieve the row with the closest value
+    closest_row_a = bard1df.loc[closest_index]
+
+    # now we get the scores that are the closest to the (n)ormal and (a)bnormal thresholds
+    score_n_95 = closest_row_n['score']
+    score_a_95 = closest_row_a['score']
+
+    bard1_cutoffs = [score_n_95, score_a_95]
+    return bard1_cutoffs
+
+
+def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and processes the data from the BARD1 and BRCA1 files
 
     aa_3to1 = {
     'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
@@ -40,7 +67,7 @@ def read_process_data(bard1_file, brca1_file, type): #Reads and processes the da
     bard1_helix_residues = [bard1_helix_1, bard1_helix_2]
     brca1_helix_residues = [brca1_helix_1, brca1_helix_2]
 
-    bard1_data = bard1_data.rename(columns = {'simplified_consequence': 'Consequence'}) #Renaming columns for consistency
+    bard1_data = bard1_data.rename(columns = {'consequence': 'Consequence'}) #Renaming columns for consistency
     brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renaming columns for consistency
     bard1_data = bard1_data.loc[bard1_data['Consequence'].isin(['missense_variant'])] #pulling only missense variants
     brca1_data = brca1_data.loc[brca1_data['Consequence'].isin(['missense_variant'])] #pulling only missense variants
@@ -238,7 +265,8 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     return fig, ax
 
 def main():
-    helical_dicts, helices = read_process_data(bard1_file, brca1_file, type = analysis_type)
+    bard1_cutoffs = get_bard1_thresholds(bard1_file)
+    helical_dicts, helices = read_process_data(bard1_file, brca1_file, bard1_cutoffs, type = analysis_type)
     
     for helix in helices:
         helix_dict = helical_dicts[helix]

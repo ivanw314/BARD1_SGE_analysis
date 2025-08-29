@@ -2,17 +2,35 @@
 import pandas as pd
 from pymol import cmd
 
-bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250813_BARD1scores_final_FILTERED.xlsx'
+bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx'
 bard1_thresholds = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250813_BARD1_thresholds.tsv'
 brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA1_SGE_AllScores.xlsx'
 
 
-threshold_df = pd.read_csv(bard1_thresholds, sep = '\t')
+#Get BARD1 thresholds
+target_value = 0.950
+bard1df = pd.read_excel(bard1_file)
+# Calculate the absolute difference for the Normal (N) density
+diffN = (bard1df['gmm_density_normal'] - target_value).abs()
+# Find the index of the minimum difference
+closest_index = diffN.idxmin()
+# Retrieve the row with the closest value
+closest_row_n = bard1df.loc[closest_index]
 
-lwr = threshold_df['lthresh'][0] * threshold_df['std_neut'][0] + threshold_df['#mu_neut'][0]
-uppr = threshold_df['uthresh'][0] * threshold_df['std_neut'][0] + threshold_df['#mu_neut'][0]
+# now repeat that for the abnormal density
+# Calculate the absolute difference
+diffA = (bard1df['gmm_density_abnormal'] - target_value).abs()
+# Find the index of the minimum difference
+closest_index = diffA.idxmin()
+# Retrieve the row with the closest value
+closest_row_a = bard1df.loc[closest_index]
 
-bard1_cutoffs = [lwr, uppr]
+# now we get the scores that are the closest to the (n)ormal and (a)bnormal thresholds
+score_n_95 = closest_row_n['score']
+score_a_95 = closest_row_a['score']
+
+bard1_cutoffs = [score_n_95, score_a_95]
+
 brca1_cutoffs = [-1.328,-0.748]
 
 type = 'min_NP'  # 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
