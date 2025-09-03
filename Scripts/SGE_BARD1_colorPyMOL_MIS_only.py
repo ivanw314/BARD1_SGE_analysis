@@ -1,6 +1,9 @@
 from pymol import cmd
 import pandas as pd
+import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
+import numpy as np
+import matplotlib.pyplot as plt
 
 #This script isn't super user-friendly but here's the run down:
 #Simply enter the region name and analysis type in the User-provided inputs block
@@ -9,9 +12,9 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 #User-provided inputs
-region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'RING' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Desktop//test_excel_outputs/20250807_202505BARD1scores_update_FILTERED_NoSplicing.xlsx' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
@@ -31,7 +34,7 @@ brct_offset = 568
 
 def read_scores(file): #Reads and filters the score files
     excel = pd.read_excel(file) #Reads TSV file into df
-    excel = excel.rename(columns = {'simplified_consequence': 'Consequence', 'score': 'snv_score'})
+    excel = excel.rename(columns = {'consequence': 'Consequence', 'score': 'snv_score'})
     data = excel[['exon','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
 
@@ -108,7 +111,7 @@ def make_residue_values(data, num, coords, region_offset, analysis):
 
 def normalize_values(values): #Normalizes all values between 0 and 1 for coloring
     # First clamp all values between 0 and 1
-    clamped_values = {k: min(max(v, -0.3), 0) for k, v in values.items()}
+    clamped_values = {k: min(max(v, -0.2), 0) for k, v in values.items()}
     clamped_values = {k: v for k, v in clamped_values.items() if not pd.isna(v)} #Filters out NA values
     
     # Get min and max of clamped values
@@ -128,6 +131,31 @@ n_bins = 1000  # Number of bins for the colormap
 cmap_name = 'gray_to_red'
 custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
 
+def create_colorbar_legend():
+    # Create figure with vertical proportions
+    fig, ax = plt.subplots(figsize=(1.5, 5))
+    fig.subplots_adjust(right=0.4)
+    
+    # Reverse the colormap to match your get_color inversion
+    reversed_cmap = custom_cmap.reversed()
+    
+    # Now use normal ordering since we reversed the colormap
+    norm = plt.Normalize(vmin=-0.2, vmax=0)
+    sm = cm.ScalarMappable(cmap=reversed_cmap, norm=norm)
+    sm.set_array([])
+    
+    # Create vertical colorbar
+    cbar = plt.colorbar(sm, cax=ax, orientation='vertical')
+    
+    # Labels now directly correspond to your data range
+    cbar.set_ticks([-0.2, -0.15, -0.1, -0.05, 0])
+    cbar.set_label('Score', rotation=270, labelpad=20)
+    
+    #plt.show()
+    return fig
+
+
+
 
 
 def get_color(value): #Gets color for each residue from mean score
@@ -140,13 +168,17 @@ def main():
     filtered, num, coords = pull_scores(data, region_coords) #Gets filtered scores
     residue_values = make_residue_values(filtered, num, coords, offset, analysis) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
+    legend = create_colorbar_legend()
+    
+    #legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BARD1_legend.png', dpi = 500)
+
     print(residue_values)
     #this block does the coloring
     for residue, value in normalized_values.items(): 
         color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
