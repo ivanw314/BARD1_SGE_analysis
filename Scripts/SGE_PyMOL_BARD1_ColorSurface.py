@@ -11,7 +11,7 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Desktop//test_excel_outputs/20250807_202505BARD1scores_update_FILTERED_NoSplicing.xlsx' #File of SGE scores
+sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #File of SGE scores
 region = 'BRCT' #Structured BARD1 regions to create surface for
 chain = 'A' #Specify chain to color 
 
@@ -36,7 +36,7 @@ def region_residues(region): #Takes region input and creates the respective resi
 def read_scores(file, region_resi): #Reads score file
     df = pd.read_excel(file)
     
-    df = df.rename(columns = {'simplified_consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
+    df = df.rename(columns = {'consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
     df = df.loc[df['Consequence'].str.contains('missense_variant')] #Filters only for missense variants
     
     df['AApos'] = df['AAsub'].transform(lambda x: x[1:-1]) #Creates new amino acid position column 
