@@ -11,7 +11,7 @@ from pymol import cmd
 from pymol.cgo import *
 
 sge_scores = '/Users/ivan/Desktop/AAsubstitutions.withSNVscores.allexons.tsv'
-region = 'BRCT'
+region = 'RING'
 
 #This script isn't super user-friendly but here's the run down:
 #First, please make sure the correct file is selected
@@ -67,10 +67,10 @@ def make_residue_values(data, num, coords): #Gets mean score for all codons
     while j < num:
         data_filt = data.copy() #copy of data for each loop 
         data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
-        mean = data_filt['snv_score_minmax'].min() #mean of scores is taken
+        mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
         
         #offset needed to assign correct residue number in PyMOL structure
-        offset = 1649 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
+        offset = 1 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
         
         codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
         
@@ -228,7 +228,7 @@ def main():
     cmd.extend("color_surface_by_property", color_surface_by_property)
     
     #color_surface_by_property(property_dict = mean_scores, palette = 'rw', show_scale = True)
-    scores = [(residue_values,'SGE_BRCA1_surface_min')]
+    scores = [(residue_values,'SGE_BRCA1_surface_mean')]
     
     for elem in scores:
         scores, surface_name = elem
