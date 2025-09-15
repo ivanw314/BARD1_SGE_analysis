@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 #User-provided inputs
 region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
-analysis = 'mean' #mininum or mean score used for coloring (min, mean)
+analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #SGE Score file
 
 
@@ -174,10 +174,10 @@ def main():
     print(residue_values)
     #this block does the coloring
     for residue, value in normalized_values.items(): 
-        color_name = f'color_N_{residue}' #color_A specifies chain A
+        color_name = f'color_A_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain N and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
