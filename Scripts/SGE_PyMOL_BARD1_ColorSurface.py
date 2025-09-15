@@ -12,8 +12,8 @@ from pymol import cmd
 from pymol.cgo import *
 
 sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #File of SGE scores
-region = 'RING' #Structured BARD1 regions to create surface for
-chain = 'B' #Specify chain to color 
+region = 'BRCT' #Structured BARD1 regions to create surface for
+chain = 'A' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers
     region_residues = []
@@ -110,8 +110,8 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
             return spectrum[idx]
         elif palette in ["rw", "red-white"]:
             # Clamp the value between 0 and 1
-            normalized = max(-0.5, min(0, value))
-            normalized = 1 + 2 * normalized  #Normalization equation to get normalized variable in [0,1]
+            normalized = max(-0.2, min(0, value))
+            normalized = 1 + 5 * normalized  #Normalization equation to get normalized variable in [0,1]
             
             # Create a custom color that transitions from red to white
             color_name = f"custom_color_{value}"

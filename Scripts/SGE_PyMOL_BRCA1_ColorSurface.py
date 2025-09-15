@@ -10,8 +10,6 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Desktop/AAsubstitutions.withSNVscores.allexons.tsv'
-region = 'RING'
 
 #This script isn't super user-friendly but here's the run down:
 #First, please make sure the correct file is selected
@@ -23,7 +21,7 @@ region = 'RING'
 
 file = '/Users/ivan/Desktop/20240830_BRCA1_SGE_AllScores.xlsx' #BRCA1 SGE scores file
 
-
+region = 'BRCT'
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
 #regions = [(1,301)] #BRCA1 RING from 1JM7
@@ -68,9 +66,9 @@ def make_residue_values(data, num, coords): #Gets mean score for all codons
         data_filt = data.copy() #copy of data for each loop 
         data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
         mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
-        
+
         #offset needed to assign correct residue number in PyMOL structure
-        offset = 1 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
+        offset = 1649 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
         
         codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
         
@@ -195,14 +193,28 @@ def color_surface_by_property_beta(property_dict=None, chain="A", selection="all
             return spectrum[idx]
         
         elif palette in ["rw", "red-white"]:
-            normalized = (value - min_val) / (max_val - min_val)
+            # Clamp the value between 0 and 1
+            normalized = max(-1.5, min(0, value))
+            normalized = 1 + (1/1.5) * normalized  #Normalization equation to get normalized variable in [0,1]
+            
             # Create a custom color that transitions from red to white
             color_name = f"custom_color_{value}"
             r = 1.0  # Red always stays at 1
             g = b = normalized  # Green and blue increase together from 0 to 1
+            
+            '''
+            # Debug print statements
+            if value < 0:
+                print(f"Value {value} (< 0): RGB = [{r}, {g}, {b}] - should be pure red [1, 0, 0]")
+            elif value > 1:
+                print(f"Value {value} (> 1): RGB = [{r}, {g}, {b}] - should be pure white [1, 1, 1]")
+            else:
+                print(f"Value {value} (between 0-1): RGB = [{r}, {g}, {b}]")
+            
+            '''
             cmd.set_color(color_name, [r, g, b])
+
             return color_name
-        
         else:
             raise ValueError("Unsupported palette: choose 'rainbow' or 'rw'")
     
