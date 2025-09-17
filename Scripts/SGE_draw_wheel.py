@@ -219,11 +219,11 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
         ax.add_artist(circle)
         if labels:
             if helix_name == 'bard1_helix_1':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = 120, ha="center", va = "center", color = labelcolor)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=12, weight = 'bold', rotation = 120, ha="center", va = "center", color = labelcolor)
             elif helix_name == 'bard1_helix_2' or helix_name == 'brca1_helix_1':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = -90, ha="center", va = "center", color = labelcolor)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=12, weight = 'bold', rotation = -90, ha="center", va = "center", color = labelcolor)
             elif helix_name == 'brca1_helix_2':
-                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=10, rotation = 180, ha="center", va = "center", color = labelcolor)
+                ax.annotate(sequence[i], xy=(circle_data['x'][i], circle_data['y'][i]), zorder = 15, fontsize=12, weight = 'bold', rotation = 180, ha="center", va = "center", color = labelcolor)
     if legend:
         restypes = set(circle_data['type'])
         handleid = []
