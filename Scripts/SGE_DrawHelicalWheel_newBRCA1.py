@@ -7,11 +7,11 @@ import matplotlib.patches as mpatches
 #Helical wheel code originally adapted from: Helixvis https://doi.org/10.21105/joss.01008 
 # BARD1 and BRCA1 cutoffs for functional classification
 
-brca1_cutoffs = [-1.328,-0.748]
+
 # File paths
 # Update these paths to the correct locations of your files
 bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx'
-brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20240830_BRCA1_SGE_AllScores.xlsx'
+brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250917_BRCA1_SGEData_Dace2025.xlsx'
 
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
@@ -44,6 +44,19 @@ def get_bard1_thresholds(bard1_file):
     bard1_cutoffs = [score_n_95, score_a_95]
     return bard1_cutoffs
 
+def get_brca1_thresholds(brca1_file):
+    brca1_df = pd.read_excel(brca1_file)
+     
+    target_value = 0.01
+    lwr_thresh = -0.799
+    diffN = (brca1_df['q_value'] - target_value).abs()
+    closest_index = diffN.idxmin()
+    closest_row_n = brca1_df.loc[closest_index]
+    score_n_01 = closest_row_n['final_function_score']
+
+    brca1_cutoffs = [score_n_01, lwr_thresh]
+
+    return brca1_cutoffs
 
 def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and processes the data from the BARD1 and BRCA1 files
 
@@ -68,19 +81,17 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
     brca1_helix_residues = [brca1_helix_1, brca1_helix_2]
 
     bard1_data = bard1_data.rename(columns = {'consequence': 'Consequence'}) #Renaming columns for consistency
-    brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renaming columns for consistency
+    brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score', 'protPos': 'AApos'}) #Renaming columns for consistency
     bard1_data = bard1_data.loc[bard1_data['Consequence'].isin(['missense_variant'])] #pulling only missense variants
-    brca1_data = brca1_data.loc[brca1_data['Consequence'].isin(['missense_variant'])] #pulling only missense variants
+    brca1_data = brca1_data.loc[brca1_data['Consequence'].isin(['Missense'])] #pulling only missense variants
 
     bard1_data['AApos'] = bard1_data['amino_acid_change'].transform(lambda x: x[1:-1]) #Gets amino acid position from the amino acid change
     bard1_data['amino_acid'] = bard1_data['amino_acid_change'].transform(lambda x: x[0]) #Gets original amino acid from the amino acid change
     bard1_data['amino_acid'] = bard1_data['amino_acid'] + bard1_data['AApos'] #Gets the full amino acid with position
 
-    brca1_data['AApos'] = brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][3:-3]) #Gets amino acid position from the HGVS protein notation
-    brca1_data['amino_acid'] = brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][0:3]) #Gets original amino acid from the HGVS protein notation
-    brca1_data['amino_acid'] = brca1_data['amino_acid'].map(aa_3to1) #Remaps the 3-letter amino acid code to 1-letter code
-    brca1_data['amino_acid'] = brca1_data['amino_acid'] + brca1_data['AApos'] #Gets the full amino acid with position
-
+    brca1_data['AApos'] = brca1_data['AApos'].astype(int) #Ensures amino acid position is an integer
+    brca1_data['amino_acid'] = brca1_data['oAA'] + brca1_data['AApos'].astype(str) #Gets the full amino acid with position
+    print(brca1_data)
     final_dfs = {} #Dicitonary to store final dictionaries for each helix
     helix_list = ['helix_1', 'helix_2'] #List for iteration over helix names
 
@@ -132,9 +143,9 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
             to_return = data.groupby('AApos').agg({'score': 'mean',
                                                    'amino_acid': 'first'}).reset_index()
         elif type == 'min_NP':
-            data['AAsub'] = data['hgvs_pro'].transform(lambda x: x[-3:])
-            data = data.loc[data['AAsub'] != 'Pro']
-            to_return = data.groupby('AApos').agg({'score': 'min',
+            data = data.loc[data['nAA'] != 'P']
+            data['function_class'] = pd.Categorical(data['function_class'], categories=['LoF', 'Intermediate', 'Neutral'], ordered=True)
+            to_return = data.groupby('AApos').agg({'function_class': 'min',
                                                    'amino_acid': 'first'}).reset_index()
         elif type == 'mean_NP':
             data['AAsub'] = data['hgvs_pro'].transform(lambda x: x[-3:])
@@ -143,8 +154,9 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
                                                    'amino_acid': 'first'}).reset_index()
 
         to_return['median_consequence'] = 1
-        to_return.loc[to_return['score'] <= brca1_cutoffs[0], 'median_consequence'] = 3
-        to_return.loc[to_return['score'] >= brca1_cutoffs[1], 'median_consequence'] = 2
+        to_return.loc[to_return['function_class'] == 'LoF', 'median_consequence'] = 3
+        to_return.loc[ to_return['function_class'] == 'Neutral', 'median_consequence'] = 2
+
         to_return['AApos'] = to_return['AApos'].astype(int)
 
         to_return.sort_values(by='AApos', inplace=True)
@@ -260,14 +272,18 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               y = 1.05)
     ax.set_aspect('equal')
     plt.show()
-    fig.savefig(path + 'fig_5b_' + helix_name + '.png', bbox_inches='tight', dpi=500, transparent=True)
+    fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
 def main():
     bard1_cutoffs = get_bard1_thresholds(bard1_file)
+    brca1_cutoffs = get_brca1_thresholds(brca1_file)
+    print(brca1_cutoffs)
+
     helical_dicts, helices = read_process_data(bard1_file, brca1_file, bard1_cutoffs, type = analysis_type)
     
+    print(helical_dicts)
     for helix in helices:
         helix_dict = helical_dicts[helix]
         x_center, y_center, num_residues = generate_wheel_coordinates(helical_dicts[helix])
