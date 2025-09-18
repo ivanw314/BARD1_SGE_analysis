@@ -13,64 +13,121 @@ import matplotlib.pyplot as plt
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Desktop/20240830_BRCA1_SGE_AllScores.xlsx' #BRCA1 SGE scores file
+file = '/Users/ivan/Desktop/20240830_BRCA1_SGE_AllScores.xlsx' #BRCA1 SGE scores file (Findlay et al. 2018)
+new_brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250917_BRCA1_SGEData_Dace2025.xlsx' #New BRCA1 SGE scores file (Dace et al. 2025)
 
+domain = 'RING' #Domain being colored (RING, BRCT)
+analysis_type = 'min' #mininum or mean score used for coloring (min, mean)
 
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
-#regions = [(1,301)] #BRCA1 RING from 1JM7
-regions = [(4945,5565)] #BRCA1 BRCT from 1T29
+if domain == 'RING':
+    regions = [(1,301)] #BRCA1 RING from 1JM7
+elif domain == 'BRCT':
+    regions = [(4945,5565)] #BRCA1 BRCT from 1T29
+else:
+    raise ValueError("Invalid domain specified. Please choose 'RING' or 'BRCT'.")
 
-def read_scores(file): #Reads and filters the score files
+if analysis_type not in ['min', 'mean']:
+    raise ValueError("Invalid analysis type specified. Please choose 'min' or 'mean'.")
+
+def read_scores(file, new_file): #Reads and filters the score files
     excel = pd.read_excel(file) #Reads excel file into df
+    new_data = pd.read_excel(new_file)
     data = excel[['target','pos','Consequence','snv_score_minmax']] #pulls out these relevant columns
-    return data
+    return data, new_data
 
-def pull_scores(data, regions): #Filters for missense scores
+def pull_scores(data, new_data, regions): #Filters for missense scores
     coords = [] #List to hold coordinates for each codon
     consequence = ['missense_variant'] #condition upon which data is fitlered (missense only)
     for start, end in regions: #loop that creates the coordinates for all codons
         for i in range(start, end + 1):
             coords.append(i)
     filtered = data[data['pos'].isin(coords) & data['Consequence'].isin(consequence)] #filters data for missense only and only within the specified coordinates
-    
+
+
+    new_data = new_data.loc[(new_data['CDSpos'].isin(coords)) & (new_data['Consequence'] == 'Missense')] #Filters new dataset for missense only and only within the specified coordinates
+    new_data['target'] = 'BRCA1_X2' #Placeholder target name to match old dataset
+
+    new_data_pos = list(set(new_data['CDSpos'].tolist()))
+    filtered = filtered.loc[~(filtered['pos'].isin(new_data_pos))] #Removes positions that are in the new dataset
+
+    new_data = new_data.rename(columns = {'CDSpos': 'pos', 'final_function_score': 'snv_score_minmax'})
+
+    filtered = pd.concat([filtered, new_data[['target','pos','Consequence','snv_score_minmax']]], ignore_index = True) #Combines the two datasets
     filtered = filtered.reset_index(drop = True) #resets index to look nice
+    filtered['pos'] = filtered['pos'].astype(int) #makes sure position is an integer
 
     codon_num = int(len(coords) / 3) #Gets number of codons
-        
+    
     return filtered, codon_num, coords
 
-def make_residue_values(data, num, coords): #Gets mean score for all codons
+def make_residue_values(data, num, coords, domain, analysis_type): #Gets mean score for all codons
     codon_score = {} #Dictionary that will hold scores for all codons in form of {Codon Number:Mean Score}
     codon_lists = [] #List to hold lists that contain the three position IDs for each codon
     
     #This loop creates the lists that are in the codon_lists element
-    i = 0
-    while (i) < len(coords): #for this while loop, have condition be i if starting region coordinate isn't 1, if it is 1, then have (i+3)
-        codon = [] #empty list that will hold all the positions
-        for i in range(i, i + 3): #for loop iterates through and creates the 3 positions
-            codon.append(coords[i]) #appends to empty list
-        codon_lists.append(codon) #appends to codon)list
 
-        i += 1
+    if domain == 'RING':
+        i = 0
+        while (i+3) < len(coords): #for this while loop, have condition be i if starting region coordinate isn't 1, if it is 1, then have (i+3)
+            codon = [] #empty list that will hold all the positions
+            for i in range(i, i + 3): #for loop iterates through and creates the 3 positions
+                codon.append(coords[i]) #appends to empty list
+            codon_lists.append(codon) #appends to codon list
 
-    #This loop gets the mean score for each codon and makes a dictionary element    
-    j = 0
-    while j < num:
-        data_filt = data.copy() #copy of data for each loop 
-        data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
-        mean = data_filt['snv_score_minmax'].min() #mean of scores is taken
-        
-        #offset needed to assign correct residue number in PyMOL structure
-        offset = 1649 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
-        
-        codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
-        
-        #this code can be used as a way to use medians for color mapping instead of mean
-        #median = data_filt['snv_score_minmax'].median()
-        #codon_score[j+1] = median
-        j += 1
-        
+            i += 1
+
+        #This loop gets the mean score for each codon and makes a dictionary element    
+        j = 0
+        while j < num:
+            data_filt = data.copy() #copy of data for each loop 
+            data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
+
+            if analysis_type == 'min':
+                mean = data_filt['snv_score_minmax'].min() #mean of scores is taken
+            elif analysis_type == 'mean':
+                mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
+            
+            #offset needed to assign correct residue number in PyMOL structure
+            offset = 1 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
+            
+            codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
+            
+            #this code can be used as a way to use medians for color mapping instead of mean
+            #median = data_filt['snv_score_minmax'].median()
+            #codon_score[j+1] = median
+            j += 1
+    elif domain == 'BRCT':
+        i = 0
+        while (i) < len(coords): #for this while loop, have condition be i if starting region coordinate isn't 1, if it is 1, then have (i+3)
+            codon = [] #empty list that will hold all the positions
+            for i in range(i, i + 3): #for loop iterates through and creates the 3 positions
+                codon.append(coords[i]) #appends to empty list
+            codon_lists.append(codon) #appends to codon list
+
+            i += 1
+
+        #This loop gets the mean score for each codon and makes a dictionary element    
+        j = 0
+        while j < num:
+            data_filt = data.copy() #copy of data for each loop 
+            data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
+
+            if analysis_type == 'min':
+                mean = data_filt['snv_score_minmax'].min() #mean of scores is taken
+            elif analysis_type == 'mean':
+                mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
+            
+            #offset needed to assign correct residue number in PyMOL structure
+            offset = 1649 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
+            
+            codon_score[j+ offset] = mean #mean score found and assigned to dictionary with key of base codon number + offset
+            
+            #this code can be used as a way to use medians for color mapping instead of mean
+            #median = data_filt['snv_score_minmax'].median()
+            #codon_score[j+1] = median
+            j += 1
     return codon_score
 
 def normalize_values(values): #Normalizes all values between 0 and 1 for coloring
@@ -127,12 +184,13 @@ def get_color(value): #Gets color for each residue from mean score
 
 
 def main():
-    data = read_scores(file) #Reads data
-    filtered, num, coords = pull_scores(data, regions) #Gets filtered scores
-    residue_values = make_residue_values(filtered, num, coords ) #Makes per-residue mean scores
+    data, new_data = read_scores(file, new_brca1_file) #Reads data
+    filtered, num, coords = pull_scores(data, new_data, regions) #Gets filtered scores
+    residue_values = make_residue_values(filtered, num, coords, domain, analysis_type) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
     legend = create_colorbar_legend()
     #legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BRCA1_legend.png', dpi = 500)
+
     #this block does the coloring
     for residue, value in normalized_values.items(): 
         color_name = f'color_A_{residue}' #color_A specifies chain A
