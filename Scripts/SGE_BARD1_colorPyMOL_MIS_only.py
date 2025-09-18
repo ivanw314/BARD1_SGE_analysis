@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 #User-provided inputs
-region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
+region = 'RING' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #SGE Score file
 
@@ -21,8 +21,6 @@ file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_tab
 ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #RING (1JM7)
 ard = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752486,214752555)] # ARD (3C5R) 
 brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
-#regions = [(1,301)] #BRCA1 RING
-
 
 #Region Offsets (What amino acid residue does the structure start in PyMOL?)
 ring_offset = 26
@@ -175,10 +173,10 @@ def main():
     print(residue_values)
     #this block does the coloring
     for residue, value in normalized_values.items(): 
-        color_name = f'color_A_{residue}' #color_A specifies chain A
+        color_name = f'color_B_{residue}' #color_A specifies chain A
         color = get_color(value) #Gets color from color map
         cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain A and resi {residue}') #chain  specifies chain A, change if not chain A
+        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 
