@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 #User-provided inputs
 region = 'BRCT' #Hardcode the region name here (RING, ARD, BRCT)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #SGE Score file
 
 
 #This block contains the list of tuples corresponding to which regions in the 
@@ -32,7 +32,8 @@ brct_offset = 568
 
 
 def read_scores(file): #Reads and filters the score files
-    excel = pd.read_excel(file) #Reads TSV file into df
+    excel = pd.read_excel(file, sheet_name = 'scores') #Reads excel file into df
+    excel = excel.loc[excel['var_type'].isin(['snv'])] #Filters for SNVs only
     excel = excel.rename(columns = {'consequence': 'Consequence', 'score': 'snv_score'})
     data = excel[['exon','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
