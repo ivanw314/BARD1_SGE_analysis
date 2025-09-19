@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Desktop/20240830_BRCA1_SGE_AllScores.xlsx' #BRCA1 SGE scores file (Findlay et al. 2018)
-new_brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250917_BRCA1_SGEData_Dace2025.xlsx' #New BRCA1 SGE scores file (Dace et al. 2025)
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx' #Combined BRCA1 score file (Findlay et al. 2018 + Dace et al. 2025)
 
 domain = 'RING' #Domain being colored (RING, BRCT)
 analysis_type = 'min' #mininum or mean score used for coloring (min, mean)
@@ -31,9 +30,9 @@ else:
 if analysis_type not in ['min', 'mean']:
     raise ValueError("Invalid analysis type specified. Please choose 'min' or 'mean'.")
 
-def read_scores(file, new_file): #Reads and filters the score files
-    excel = pd.read_excel(file) #Reads excel file into df
-    new_data = pd.read_excel(new_file)
+def read_scores(file): #Reads and filters the score files
+    excel = pd.read_excel(file, sheet_name = 'findlay_2018') #Reads Findlay 2018 data 
+    new_data = pd.read_excel(file, sheet_name = 'dace_2025') #Reads Dace 2025 data
     data = excel[['target','pos','Consequence','snv_score_minmax']] #pulls out these relevant columns
     return data, new_data
 
@@ -184,7 +183,7 @@ def get_color(value): #Gets color for each residue from mean score
 
 
 def main():
-    data, new_data = read_scores(file, new_brca1_file) #Reads data
+    data, new_data = read_scores(file) #Reads data
     filtered, num, coords = pull_scores(data, new_data, regions) #Gets filtered scores
     residue_values = make_residue_values(filtered, num, coords, domain, analysis_type) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1

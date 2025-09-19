@@ -10,53 +10,27 @@ import matplotlib.patches as mpatches
 
 # File paths
 # Update these paths to the correct locations of your files
-bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx'
-brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250917_BRCA1_SGEData_Dace2025.xlsx'
-
+bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx'
+brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx'
+brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay et al. 2018
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
-analysis_type = 'min_NP'  # Type of analysis. 'min', 'mean', 'min_NP', 'mean_NP' for minimum, mean score, or minimum/mean (proline substituions removed)
+analysis_type = 'min'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
+
+if analysis_type not in ['min', 'min_NP']:
+    raise ValueError("Invalid analysis type specified. Please choose 'min' or 'min_NP'.")
+
 pd.options.mode.chained_assignment = None
 
-def get_bard1_thresholds(bard1_file):
-        # find the GMM thresholds
-    target_value = 0.950
-    bard1df = pd.read_excel(bard1_file)
-    # Calculate the absolute difference for the Normal (N) density
-    diffN = (bard1df['gmm_density_normal'] - target_value).abs()
-    # Find the index of the minimum difference
-    closest_index = diffN.idxmin()
-    # Retrieve the row with the closest value
-    closest_row_n = bard1df.loc[closest_index]
+def get_bard1_thresholds(bard1_file): #Reads estimated GMM thresholds for BARD1 from the bard1_file
 
-    # now repeat that for the abnormal density
-    # Calculate the absolute difference
-    diffA = (bard1df['gmm_density_abnormal'] - target_value).abs()
-    # Find the index of the minimum difference
-    closest_index = diffA.idxmin()
-    # Retrieve the row with the closest value
-    closest_row_a = bard1df.loc[closest_index]
+    threshold_df = pd.read_excel(bard1_file, sheet_name = 'thresholds')
 
-    # now we get the scores that are the closest to the (n)ormal and (a)bnormal thresholds
-    score_n_95 = closest_row_n['score']
-    score_a_95 = closest_row_a['score']
+    thresholds = [threshold_df['min'][0], threshold_df['max'][0]]
+    return thresholds
 
-    bard1_cutoffs = [score_n_95, score_a_95]
-    return bard1_cutoffs
 
-def get_brca1_thresholds(brca1_file):
-    brca1_df = pd.read_excel(brca1_file)
      
-    target_value = 0.01
-    lwr_thresh = -0.799
-    diffN = (brca1_df['q_value'] - target_value).abs()
-    closest_index = diffN.idxmin()
-    closest_row_n = brca1_df.loc[closest_index]
-    score_n_01 = closest_row_n['final_function_score']
-
-    brca1_cutoffs = [score_n_01, lwr_thresh]
-
-    return brca1_cutoffs
 
 def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and processes the data from the BARD1 and BRCA1 files
 
@@ -67,8 +41,10 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
     'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'
     } #Dictionary for converting 3-letter amino acid codes to 1-letter codes
 
-    bard1_data = pd.read_excel(bard1_file) #Reads the BARD1 data from an Excel file
-    brca1_data = pd.read_excel(brca1_file) #Reads the BRCA1 data from an Excel file
+    bard1_data = pd.read_excel(bard1_file, sheet_name = 'scores') #Reads the BARD1 data from an Excel file
+    bard1_data = bard1_data.loc[bard1_data['var_type'].isin(['snv'])] #Pulls only single nucleotide variants
+    brca1_data = pd.read_excel(brca1_file, sheet_name = 'dace_2025') #Reads the BRCA1 data from an Excel file
+    old_brca1_data = pd.read_excel(brca1_file, sheet_name = 'findlay_2018') #Reads the Findlay 2018 BRCA1 data from an Excel file
 
     #Helix residues for BARD1: [34, 48] and [98, 117]
     #Helix residues for BRCA1: [7, 22] and [80, 97]
@@ -91,6 +67,28 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
 
     brca1_data['AApos'] = brca1_data['AApos'].astype(int) #Ensures amino acid position is an integer
     brca1_data['amino_acid'] = brca1_data['oAA'] + brca1_data['AApos'].astype(str) #Gets the full amino acid with position
+    print(brca1_data.columns)
+
+    old_brca1_data = old_brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renaming columns for consistency
+    old_brca1_data = old_brca1_data.loc[old_brca1_data['Consequence'].isin(['missense_variant'])] #Pulls only missense variants
+    old_brca1_data['AApos'] = old_brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][3:-3]) #Gets amino acid position from the HGVS protein notation
+    old_brca1_data['AApos'] = old_brca1_data['AApos'].astype(int) #Ensures amino acid position is an integer
+    old_brca1_data['amino_acid'] = old_brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][0:3]) #Gets original amino acid from the HGVS protein notation
+    old_brca1_data['nAA'] = old_brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][-3:]) #Gets new amino acid from the HGVS protein notation
+    old_brca1_data['nAA'] = old_brca1_data['nAA'].map(aa_3to1) #Remaps the 3-letter amino acid code to 1-letter code
+    old_brca1_data['amino_acid'] = old_brca1_data['amino_acid'].map(aa_3to1) #Remaps the 3-letter amino acid code to 1-letter code
+    old_brca1_data['amino_acid'] = old_brca1_data['amino_acid'] + old_brca1_data['AApos'].astype(str) #Gets the full amino acid with position
+    old_brca1_data['function_class'] = 'Intermediate' #Sets default function class to Intermediate
+    old_brca1_data.loc[old_brca1_data['score'] <= brca1_cutoffs[0], 'function_class'] = 'LoF' #Sets low score variants to LoF
+    old_brca1_data.loc[old_brca1_data['score'] >= brca1_cutoffs[1], 'function_class'] = 'Neutral' #Sets high score variants to HiF
+
+    new_brca1_pos = list(set(brca1_data['AApos'].tolist())) #List of amino acid positions in the new BRCA1 data
+    print(len(new_brca1_pos))
+    print(len(old_brca1_data))
+    old_brca1_data = old_brca1_data.loc[~(old_brca1_data['AApos'].isin(new_brca1_pos))] #Removes positions already present in the new BRCA1 data
+    print(len(old_brca1_data))
+    brca1_data = pd.concat([brca1_data, old_brca1_data])    #Combines the new and old BRCA1 data
+
     print(brca1_data)
     final_dfs = {} #Dicitonary to store final dictionaries for each helix
     helix_list = ['helix_1', 'helix_2'] #List for iteration over helix names
@@ -102,25 +100,20 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
 
         #Aggregates the data based on the selected type of analysis
         if type == 'min':
-            to_return = data.groupby('AApos').agg({'score': 'min',
+            data['functional_consequence'] = pd.Categorical(data['functional_consequence'], categories=['functionally_abnormal', 'indeterminate', 'functionally_normal'], ordered=True)
+            to_return = data.groupby('AApos').agg({'functional_consequence': 'min',
                                                    'amino_acid': 'first'}).reset_index()
-        elif type == 'mean':
-            to_return = data.groupby('AApos').agg({'score': 'mean',
-                                                   'amino_acid': 'first'}).reset_index()
+
         elif type == 'min_NP':
             data['AAsub'] = data['amino_acid_change'].transform(lambda x: x[-1])
             data = data.loc[data['AAsub'] != 'P']
-            to_return = data.groupby('AApos').agg({'score': 'min',
-                                                   'amino_acid': 'first'}).reset_index()
-        elif type == 'mean_NP':
-            data['AAsub'] = data['amino_acid_change'].transform(lambda x: x[-1])
-            data = data.loc[data['AAsub'] != 'P']
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+            data['functional_consequence'] = pd.Categorical(data['functional_consequence'], categories=['functionally_abnormal', 'indeterminate', 'functionally_normal'], ordered=True)
+            to_return = data.groupby('AApos').agg({'functional_consequence': 'min',
                                                    'amino_acid': 'first'}).reset_index()
 
         to_return['median_consequence'] = 1 #Sets default function to 1 (indeterminate) (color to yellow)
-        to_return.loc[to_return['score'] <= bard1_cutoffs[0], 'median_consequence'] = 3 #Sets low score variants to abnormal color to red
-        to_return.loc[to_return['score'] >= bard1_cutoffs[1], 'median_consequence'] = 2 #Sets high score variatns to normal, color to blue
+        to_return.loc[to_return['functional_consequence'] == 'functionally_abnormal', 'median_consequence'] = 3 #Sets low score variants to abnormal, color to red
+        to_return.loc[to_return['functional_consequence'] == 'functionally_normal', 'median_consequence'] = 2 #Sets high score variants to normal, color to white
         to_return['AApos'] = to_return['AApos'].astype(int) #Converts amino acid position to integer for sorting
         to_return.sort_values(by='AApos', inplace=True) #Sorts in ascending order by amino acid position
 
@@ -137,20 +130,13 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
         data = brca1_data.loc[brca1_data['AApos'].astype(int).isin(elem)]
 
         if type == 'min':
-            to_return = data.groupby('AApos').agg({'score': 'min',
-                                                   'amino_acid': 'first'}).reset_index()
-        elif type == 'mean':
-            to_return = data.groupby('AApos').agg({'score': 'mean',
+            data['function_class'] = pd.Categorical(data['function_class'], categories=['LoF', 'Intermediate', 'Neutral'], ordered=True)
+            to_return = data.groupby('AApos').agg({'function_class': 'min',
                                                    'amino_acid': 'first'}).reset_index()
         elif type == 'min_NP':
             data = data.loc[data['nAA'] != 'P']
             data['function_class'] = pd.Categorical(data['function_class'], categories=['LoF', 'Intermediate', 'Neutral'], ordered=True)
             to_return = data.groupby('AApos').agg({'function_class': 'min',
-                                                   'amino_acid': 'first'}).reset_index()
-        elif type == 'mean_NP':
-            data['AAsub'] = data['hgvs_pro'].transform(lambda x: x[-3:])
-            data = data.loc[data['AAsub'] != 'Pro']
-            to_return = data.groupby('AApos').agg({'score': 'mean',
                                                    'amino_acid': 'first'}).reset_index()
 
         to_return['median_consequence'] = 1
@@ -278,11 +264,11 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
 
 def main():
     bard1_cutoffs = get_bard1_thresholds(bard1_file)
-    brca1_cutoffs = get_brca1_thresholds(brca1_file)
     print(brca1_cutoffs)
 
     helical_dicts, helices = read_process_data(bard1_file, brca1_file, bard1_cutoffs, type = analysis_type)
     
+
     print(helical_dicts)
     for helix in helices:
         helix_dict = helical_dicts[helix]
