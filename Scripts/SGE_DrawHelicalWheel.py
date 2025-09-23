@@ -15,7 +15,7 @@ brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_dat
 brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay et al. 2018
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
-analysis_type = 'min'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
+analysis_type = 'min_NP'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
 
 if analysis_type not in ['min', 'min_NP']:
     raise ValueError("Invalid analysis type specified. Please choose 'min' or 'min_NP'.")
