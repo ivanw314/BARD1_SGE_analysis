@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 #User-provided inputs
 region = 'RING' #Hardcode the region name here (RING, ARD, BRCT)
+chain = 'B' #Chain in the PDB structure to color (A, B, etc)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #SGE Score file
 
@@ -23,15 +24,20 @@ ard = [(214780560,214780601),(214769232,214769312),(214767482,214767654),(214752
 brct = [(214745722,214745830),(214745067,214745159),(214730411,214730508),(214728685,214729008)] # BRCT (3FA2)
 
 #Region Offsets (What amino acid residue does the structure start in PyMOL?)
-ring_offset = 26
-ard_offset = 425
-brct_offset = 568
+region_offsets = {
+    'RING': 26,
+    'ARD': 425,
+    'BRCT': 568
+}
 
+region_end = {'RING': 122, 'ARD': 545, 'BRCT': 777} #Last residue in each domain
 
+expected_residues = list(range(region_offsets[region], region_end[region] + 1))
 
 def read_scores(file): #Reads and filters the score files
     excel = pd.read_excel(file, sheet_name = 'scores') #Reads excel file into df
     excel = excel.loc[excel['var_type'].isin(['snv'])] #Filters for SNVs only
+    excel = excel.loc[~excel['variant_qc_flag'].isin(['WARN'])]
     excel = excel.rename(columns = {'consequence': 'Consequence', 'score': 'snv_score'})
     data = excel[['exon','pos','Consequence','snv_score']] #pulls out these relevant columns
     return data
@@ -40,16 +46,16 @@ def get_region_info(region): #Gets the respective coordinates and offset for eac
     
     if region == 'RING':
         region_coords = ring
-        offset = ring_offset
+        offset = region_offsets['RING']
         
     elif region == 'ARD':
         region_coords = ard
-        offset = ard_offset
+        offset = region_offsets['ARD']
         
     elif region == 'BRCT':
         region_coords = brct
-        offset = brct_offset
-    
+        offset = region_offsets['BRCT']
+
     return region_coords, offset
 
 def pull_scores(data, regions): #Filters for missense scores
@@ -130,9 +136,9 @@ cmap_name = 'gray_to_red'
 custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
 
 def create_colorbar_legend():
-    # Create figure with vertical proportions
-    fig, ax = plt.subplots(figsize=(1.5, 5))
-    fig.subplots_adjust(right=0.4)
+    # Create figure with horizontal proportions
+    fig, ax = plt.subplots(figsize=(1, 0.5))
+    fig.subplots_adjust(bottom=0.5)
     
     # Reverse the colormap to match your get_color inversion
     reversed_cmap = custom_cmap.reversed()
@@ -142,12 +148,12 @@ def create_colorbar_legend():
     sm = cm.ScalarMappable(cmap=reversed_cmap, norm=norm)
     sm.set_array([])
     
-    # Create vertical colorbar
-    cbar = plt.colorbar(sm, cax=ax, orientation='vertical')
+    # Create horizontal colorbar
+    cbar = plt.colorbar(sm, cax=ax, orientation='horizontal')
     
     # Labels now directly correspond to your data range
-    cbar.set_ticks([-0.2, -0.15, -0.1, -0.05, 0])
-    cbar.set_label('Score', rotation=270, labelpad=20)
+    cbar.set_ticks([-0.2, -0.1, 0])
+    cbar.set_label('Score', labelpad=10)
     
     #plt.show()
     return fig
@@ -169,14 +175,23 @@ def main():
     legend = create_colorbar_legend()
     
     #legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BARD1_legend.png', dpi = 500)
-
-    print(residue_values)
+    present_residues = list(normalized_values.keys())
+    
+    for resi in expected_residues:
+        if resi not in present_residues:
+            print(f'Residue {resi} missing from data, assigning grey color')
+            normalized_values[resi] = 1
     #this block does the coloring
     for residue, value in normalized_values.items(): 
-        color_name = f'color_B_{residue}' #color_A specifies chain A
-        color = get_color(value) #Gets color from color map
-        cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
-        cmd.color(color_name, f'chain B and resi {residue}') #chain  specifies chain A, change if not chain A
+        if value == 1:
+            color_name = f'color_{chain}_{residue}' #color_A specifies chain A
+            cmd.set_color(color_name, [128, 128, 128])  # RGB values
+            cmd.color(color_name, f'chain {chain} and resi {residue}') #chain  specifies chain A, change if not chain A
+        else:
+            color_name = f'color_{chain}_{residue}' #color_A specifies chain A
+            color = get_color(value) #Gets color from color map
+            cmd.set_color(color_name, [color[0], color[1], color[2]])  # RGB values
+            cmd.color(color_name, f'chain {chain} and resi {residue}') #chain  specifies chain A, change if not chain A
 
     cmd.show('cartoon')
 

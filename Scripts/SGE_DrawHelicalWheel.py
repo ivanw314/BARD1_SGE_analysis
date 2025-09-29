@@ -67,7 +67,7 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
 
     brca1_data['AApos'] = brca1_data['AApos'].astype(int) #Ensures amino acid position is an integer
     brca1_data['amino_acid'] = brca1_data['oAA'] + brca1_data['AApos'].astype(str) #Gets the full amino acid with position
-    print(brca1_data.columns)
+ 
 
     old_brca1_data = old_brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renaming columns for consistency
     old_brca1_data = old_brca1_data.loc[old_brca1_data['Consequence'].isin(['missense_variant'])] #Pulls only missense variants
@@ -83,13 +83,11 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
     old_brca1_data.loc[old_brca1_data['score'] >= brca1_cutoffs[1], 'function_class'] = 'Neutral' #Sets high score variants to HiF
 
     new_brca1_pos = list(set(brca1_data['AApos'].tolist())) #List of amino acid positions in the new BRCA1 data
-    print(len(new_brca1_pos))
-    print(len(old_brca1_data))
+ 
     old_brca1_data = old_brca1_data.loc[~(old_brca1_data['AApos'].isin(new_brca1_pos))] #Removes positions already present in the new BRCA1 data
-    print(len(old_brca1_data))
+
     brca1_data = pd.concat([brca1_data, old_brca1_data])    #Combines the new and old BRCA1 data
 
-    print(brca1_data)
     final_dfs = {} #Dicitonary to store final dictionaries for each helix
     helix_list = ['helix_1', 'helix_2'] #List for iteration over helix names
 
@@ -97,6 +95,9 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
     while i < len(bard1_helix_residues): #Iterates over the helix residues for BARD1 and collapses scores based on selected analysis
         elem = bard1_helix_residues[i] #Gets helix residues for the current helix
         data = bard1_data.loc[bard1_data['AApos'].astype(int).isin(elem)] #Gets data for the current helix residues
+
+        all_residues = list(set(data['amino_acid'].tolist())) #List of all residues present in the data for the current helix
+        data = data.loc[~data['variant_qc_flag'].isin(['WARN'])]
 
         #Aggregates the data based on the selected type of analysis
         if type == 'min':
@@ -115,6 +116,12 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
         to_return.loc[to_return['functional_consequence'] == 'functionally_abnormal', 'median_consequence'] = 3 #Sets low score variants to abnormal, color to red
         to_return.loc[to_return['functional_consequence'] == 'functionally_normal', 'median_consequence'] = 2 #Sets high score variants to normal, color to white
         to_return['AApos'] = to_return['AApos'].astype(int) #Converts amino acid position to integer for sorting
+
+        missing_residues = list(set(all_residues) - set(to_return['amino_acid'].tolist())) #Finds residues missing from the aggregated data
+        for res in missing_residues: #Adds missing residues with default gray color
+            new_row = pd.DataFrame({'AApos': [int(res[1:])], 'amino_acid': [res], 'functional_consequence': ['WARN_var'], 'median_consequence': [0]}) #Creates a new row for the missing residue with gray color
+            to_return = pd.concat([to_return, new_row], ignore_index=True)
+
         to_return.sort_values(by='AApos', inplace=True) #Sorts in ascending order by amino acid position
 
         if helix_list[i] ==  'helix_2': #2nd helix should be sorted in descending order
@@ -144,6 +151,7 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
         to_return.loc[ to_return['function_class'] == 'Neutral', 'median_consequence'] = 2
 
         to_return['AApos'] = to_return['AApos'].astype(int)
+
 
         to_return.sort_values(by='AApos', inplace=True)
         if helix_list[i] ==  'helix_2':
@@ -258,23 +266,22 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               y = 1.05)
     ax.set_aspect('equal')
     plt.show()
-    fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
+    #fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
 def main():
     bard1_cutoffs = get_bard1_thresholds(bard1_file)
-    print(brca1_cutoffs)
 
     helical_dicts, helices = read_process_data(bard1_file, brca1_file, bard1_cutoffs, type = analysis_type)
     
 
-    print(helical_dicts)
+    #print(helical_dicts)
     for helix in helices:
         helix_dict = helical_dicts[helix]
         x_center, y_center, num_residues = generate_wheel_coordinates(helical_dicts[helix])
         seq_list = list(helical_dicts[helix].keys())
-        print(helix, helix_dict)
+        #print(helix, helix_dict)
         missense_draw_wheel(seq_list, path, helix_dict, helix, num_residues, x_center, y_center, labels = True)
 
 
