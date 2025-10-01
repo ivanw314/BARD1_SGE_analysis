@@ -1,143 +1,164 @@
 import pandas as pd
-from pymol import cmd
+from pymol import cmd, stored
+
 
 # === Parameters ===
-pdb_file = "8G4L_subset.cif"
-mybpc3_chain = "ao"
-c10_start = 1164
-output_pml = "c10_visualization.pml"
-output_pse = "c10_visualization.pse"
-score_threshold = 0.4259  # Threshold for counting variants
+#Script adapted from S. Fayer
 base_sphere_size = 0.5  # Starting size for sphere
 size_increment = 0.1  # Size increase per variant below threshold
+keep_structures = True # Whether to keep existing structures in PyMOL session
+
+# Figure definitions
+gene = 'BARD1' #Change to BRCA1 for RING and BRCT comparisons
+figure_type = 'RING' #RING E2 (RING), ARD (ARD H4 interaction), BRCT (BRCT phosphopeptide interaction)
+
+obj_name = f"{gene}_{figure_type}_spheres" #Object name
+
+#Logic for figure types
+if figure_type == 'RING':
+    print("Generating RING figure")
+
+    if gene == 'BRCA1':
+        chain = 'A'
+        pdb_id = '1JM7'
+        zn_resi = [24, 27, 44, 47, 39, 41, 61, 64]
+
+        sphere_resi = list(range(23, 31)) + list(range(51, 69))
+        sphere_resi = [res for res in sphere_resi if res not in zn_resi]  # Exclude zinc-coordinating residues
+
+    elif gene == 'BARD1':
+        chain = 'B'
+        pdb_id = '1JM7'
+        zn_resi = [50, 53, 66, 68, 71, 74, 83, 86]
+
+        sphere_resi = list(range(49, 57)) + list(range(77, 91))
+        sphere_resi = [res for res in sphere_resi if res not in zn_resi]  # Exclude zinc-coordinating residues
+elif figure_type == 'ARD':
+    print("Generating ARD figure")
+    pdb_id = '7LYC'
+    chain = 'N'
+    sphere_resi = [429, 458, 462, 467, 470, 500]
+
+elif figure_type == 'BRCT':
+    print("Generating BRCT figure")
+    if gene == 'BARD1':
+        chain = 'A'
+        pdb_id = '3FA2'
+        sphere_resi = [575, 576, 617, 619]
+    elif gene == 'BRCA1':
+        chain = 'A'
+        pdb_id = '1T29'
+        sphere_resi = [1655, 1656, 1700, 1702]
+
 
 # Load your score data
-score_df = pd.read_csv('df_plot_SASA.csv')
+if gene == 'BARD1':
+    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx'
+    score_df = pd.read_excel(score_file, sheet_name='scores')
+    score_df = score_df.loc[(~score_df['amino_acid_change'].isin(['---'])) & (score_df['var_type'].isin(['snv']))]
+    score_df = score_df.loc[~score_df['variant_qc_flag'].isin(['WARN'])]
 
-classification_df = pd.read_csv('position_classifications.csv')  # Replace with your actual file
+    phospho_site_override = pd.DataFrame({'pos_id': ['214745805:A','214745805:G', '214745806:A', '214745806:G', '214745806:T' ,'214745805:T', '214745119:A', '214745119:C', '214745119:T', '214745121:A', '214745121:C', '214745121:G', '214745120:T','214745121:A','214745120:A'],
+                                           'score': [-0.109977, -0.0175886, -0.0298891, -0.00470975, -0.0413407, 0.0208659, -0.00814722, -0.00228625, 0.00051614, -0.00129351, 0.018338, -0.0955636,  -0.0116846, -0.0049156, -0.0441137],
+                                           'amino_acid_change': ['G576V', 'G576A', 'G576C', 'G576R', 'G576S', 'G576D', 'T617T', 'T617T', 'T617T', 'T617S', 'T617A', 'T617P', 'T617N', 'T617S','T617I'],
+                                           'functional_consequence': ['functionally_abnormal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'indeterminate', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_abnormal', 'functionally_normal', 'functionally_normal', 'indeterminate'],
+                                           'AApos': [576, 576, 576, 576, 576, 576, 617, 617, 617, 617, 617, 617, 617, 617, 617]
+                                          })
 
+    score_df = pd.concat([score_df, phospho_site_override])
+    score_df['aa_pos'] = score_df['amino_acid_change'].transform(lambda x: int(x[1:-1]))
+elif gene == 'BRCA1':
+    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx'
+    old_brca1_data = pd.read_excel(score_file, sheet_name='findlay_2018')
+    brca1_data = pd.read_excel(score_file, sheet_name= 'dace_2025')
 
-# Calculate sphere sizes based on variants below threshold at each position
-variants_below_threshold = {}
-if 'average_score_norm' in score_df.columns and 'aa_pos' in score_df.columns:
-    below_threshold = score_df[score_df['average_score_norm'] < score_threshold].copy()
-    below_threshold['pos'] = below_threshold['aa_pos'].astype(str)
+    brca1_data = brca1_data.rename(columns = {'snv_score_minmax': 'score', 'protPos': 'AApos'}) #Renaming columns for consistency
+
+    old_brca1_min_cutoff = -1.328
+
+    brca1_data = brca1_data.loc[brca1_data['Consequence'].isin(['Missense'])] #pulling only missense variants
+    brca1_data['functional_consequence'] = 'indeterminate'  #Setting default function class to indeterminate
+
+    brca1_data.loc[brca1_data['function_class'] == 'LoF', 'functional_consequence'] = 'functionally_abnormal'
+    brca1_data.loc[brca1_data['function_class'] == 'Neutral', 'functional_consequence'] = 'functionally_normal'
+
+    old_brca1_data = old_brca1_data.rename(columns = {'snv_score_minmax': 'score'}) #Renaming columns for consistency
+    old_brca1_data = old_brca1_data.loc[old_brca1_data['Consequence'].isin(['missense_variant'])] #Pulls only missense variants
+    old_brca1_data['AApos'] = old_brca1_data['hgvs_pro'].transform(lambda x: x.split(':')[1].split('.')[1][3:-3]) #Gets amino acid position from the HGVS protein notation
+    old_brca1_data['AApos'] = old_brca1_data['AApos'].astype(int) #Ensures amino acid position is an integer
+    old_brca1_data['functional_consequence'] = 'indeterminate' #Sets default function class to Intermediate
+    old_brca1_data.loc[old_brca1_data['score'] <= old_brca1_min_cutoff, 'functional_consequence'] = 'functionally_abnormal' #Classifies functionally abnormal variants
+    old_brca1_data.loc[old_brca1_data['score'] > old_brca1_min_cutoff, 'functional_consequence'] = 'functionally_normal' #Classifies functionally normal variants
     
-    for pos, group in below_threshold.groupby('pos'):
-        variants_below_threshold[str(int(float(pos)))] = len(group)
-    
-    print(f"Found {len(variants_below_threshold)} positions with variants below threshold {score_threshold}")
 
-# Add sphere size to classification DataFrame
-classification_df['sphere_size'] = classification_df['resi'].apply(
-    lambda pos: base_sphere_size + (variants_below_threshold.get(str(pos), 1) - 1) * size_increment
-)
 
-# Only keep positions that have variants below threshold
-classification_df = classification_df[classification_df['resi'].astype(str).isin(variants_below_threshold.keys())]
+    new_brca1_pos = list(set(brca1_data['AApos'].tolist())) #List of amino acid positions in the new BRCA1 data
+ 
+    old_brca1_data = old_brca1_data.loc[~(old_brca1_data['AApos'].isin(new_brca1_pos))] #Removes positions already present in the new BRCA1 data
 
-print(f"Visualizing {len(classification_df)} positions with spheres")
+
+    score_df = pd.concat([brca1_data, old_brca1_data])    #Combines the new and old BRCA1 data
+    score_df['AApos'] = score_df['AApos'].astype(int)  #Ensures amino acid position is an integer
+    score_df = score_df.rename(columns={'AApos': 'aa_pos'})  #Renames column for consistency
+    print(score_df)
+
+
+score_df = score_df[score_df['aa_pos'].isin(sphere_resi)]
+
+classification_df = score_df.groupby(['aa_pos', 'functional_consequence']).size().reset_index()
+
+classification_df = classification_df.loc[classification_df['functional_consequence'].isin(['functionally_abnormal'])]
+
+classification_df = classification_df.rename(columns={'aa_pos': 'resi', 'functional_consequence': 'classification', 0: 'n_variants'})
+
+classification_df['sphere_size'] = classification_df['n_variants'].apply(lambda x: base_sphere_size + (x - 1) * size_increment)
+print(classification_df)
+
+# ============================================================================
+# PYMOL VISUALIZATION
+# ============================================================================
 
 # Initialize PyMOL
-cmd.reinitialize()
-cmd.load(pdb_file, "structure")
+if keep_structures == False:
+    cmd.reinitialize()
+    cmd.hide("everything")
 
-# Create objects
-cmd.create("chain_ao_only", f"structure and chain {mybpc3_chain}")
-cmd.create("myh7_surface", f"structure and not chain {mybpc3_chain}")
-cmd.hide("everything")
+# Fetch structure
+cmd.set('fetch_path', '')  # Don't save fetched files to disk
+cmd.fetch(pdb_id)
+cmd.create(obj_name, f"{pdb_id} and chain {chain}")
+cmd.delete(pdb_id)
 
-# Show MYBPC3 C10 domain cartoon
-c10_sel = f"chain_ao_only and resi {c10_start}-"
-cmd.show("cartoon", c10_sel)
+# Hide everything first
+
+
+# Show full chain as cartoon
+cmd.show("cartoon", obj_name)
 cmd.set("cartoon_fancy_helices", 1)
-cmd.color("neon", f"{c10_sel} and name N+C+O+CA")
+cmd.color("lightblue", obj_name)
 
-# Show MYH7 surface
-cmd.show("surface", "myh7_surface")
-cmd.color("gray90", "myh7_surface")
-cmd.set("transparency", 0.3, "myh7_surface")
-
-# Add spheres for each position in DataFrame
+# Add spheres for each position in your dataframe
 for idx, row in classification_df.iterrows():
     pos = int(row['resi'])
-    color = row['color']
-    size = row['sphere_size']
+    sphere_size = float(row['sphere_size'])
     
-    # Check if glycine (use CA) or other (use CB)
+    # Check if glycine (use CA) or other amino acids (use CB)
     stored.resn_list = []
-    cmd.iterate(f"chain_ao_only and resi {pos} and name CA", "stored.resn_list.append(resn)")
-    
-    if stored.resn_list and stored.resn_list[0] == 'GLY':
-        atom_sel = f"chain_ao_only and resi {pos} and name CA"
-    else:
-        atom_sel = f"chain_ao_only and resi {pos} and name CB"
-    
-    # Show sphere with specified color and size
-    cmd.show("spheres", atom_sel)
-    cmd.color(color, atom_sel)
-    cmd.set("sphere_scale", size, atom_sel)
-    cmd.set("sphere_transparency", 0.0, atom_sel)
+    cmd.iterate(f"{obj_name} and resi {pos} and name CA", "stored.resn_list.append(resn)")
 
-# Zoom and styling
-cmd.zoom(c10_sel)
+    if stored.resn_list and stored.resn_list[0] == 'GLY':
+        atom_sel = f"{obj_name} and resi {pos} and name CA"
+    else:
+        atom_sel = f"{obj_name} and resi {pos} and name CB"
+    
+    # Show sphere with specified size
+    cmd.show("spheres", atom_sel)
+    cmd.color("gray", atom_sel)
+    cmd.set("sphere_scale", sphere_size, atom_sel)
+
+# Final styling
 cmd.bg_color("white")
 cmd.set("ray_shadows", 0)
-cmd.set("ambient", 0.3)
+cmd.set("ambient", 0.4)
 
-# Generate PML script
-pml_commands = f"""# PyMOL visualization script
-# Sphere size = {base_sphere_size} + {size_increment} * (variants below {score_threshold} - 1)
-load {pdb_file}
-create chain_ao_only, chain {mybpc3_chain}
-create myh7_surface, not chain {mybpc3_chain}
-hide everything
-
-# Show MYBPC3 C10 domain cartoon
-show cartoon, chain_ao_only and resi {c10_start}-
-color neon, chain_ao_only and name N+C+O+CA
-set cartoon_fancy_helices, 1
-
-# Show MYH7 surface
-show surface, myh7_surface
-color gray90, myh7_surface
-set transparency, 0.3, myh7_surface
-
-"""
-
-# Add sphere commands from DataFrame
-for idx, row in classification_df.iterrows():
-    pos = int(row['resi'])
-    color = row['color']
-    size = row['sphere_size']
-    classification = row.get('classification', 'unknown')
-    n_variants = variants_below_threshold.get(str(pos), 1)
-    
-    # Determine atom name
-    stored.resn_list = []
-    cmd.iterate(f"chain_ao_only and resi {pos} and name CA", "stored.resn_list.append(resn)")
-    atom_name = 'CA' if (stored.resn_list and stored.resn_list[0] == 'GLY') else 'CB'
-    
-    pml_commands += f"# Position {pos}: {classification} ({n_variants} variants)\n"
-    pml_commands += f"show spheres, chain_ao_only and resi {pos} and name {atom_name}\n"
-    pml_commands += f"color {color}, chain_ao_only and resi {pos} and name {atom_name}\n"
-    pml_commands += f"set sphere_scale, {size}, chain_ao_only and resi {pos} and name {atom_name}\n"
-    pml_commands += f"set sphere_transparency, 0.0, chain_ao_only and resi {pos} and name {atom_name}\n\n"
-
-pml_commands += f"""
-zoom chain_ao_only and resi {c10_start}-
-bg_color white
-set ray_shadows, 0
-set ambient, 0.3
-"""
-
-# Save files
-with open(output_pml, 'w') as f:
-    f.write(pml_commands)
-print(f"Saved: {output_pml}")
-
-cmd.save(output_pse)
-print(f"Saved: {output_pse}")
-
-print(f"\nGenerated visualization for {len(classification_df)} positions")
-print(f"Sphere sizes range from {classification_df['sphere_size'].min():.1f} to {classification_df['sphere_size'].max():.1f}")
+print(f"Visualized {len(classification_df)} positions on {pdb_id} chain {chain}")
