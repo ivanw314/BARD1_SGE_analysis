@@ -16,7 +16,8 @@ brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
 analysis_type = 'min_NP'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
-
+save_fig = True # Whether to save the figure
+show_fig = False # Whether to display the figure
 if analysis_type not in ['min', 'min_NP']:
     raise ValueError("Invalid analysis type specified. Please choose 'min' or 'min_NP'.")
 
@@ -265,8 +266,11 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
               fontsize=12,
               y = 1.05)
     ax.set_aspect('equal')
-    plt.show()
-    #fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
+
+    if show_fig:
+        plt.show()
+    if save_fig:
+        fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
