@@ -11,9 +11,9 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/20250825_BARD1snvscores_filtered.xlsx' #File of SGE scores
-region = 'BRCT' #Structured BARD1 regions to create surface for
-chain = 'A' #Specify chain to color 
+sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #File of SGE scores
+region = 'RING' #Structured BARD1 regions to create surface for
+chain = 'B' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers
     region_residues = []
@@ -34,8 +34,9 @@ def region_residues(region): #Takes region input and creates the respective resi
     return region_residues
 
 def read_scores(file, region_resi): #Reads score file
-    df = pd.read_excel(file)
+    df = pd.read_excel(file, sheet_name='scores') #Reads in score file
     
+    df = df.loc[df['variant_qc_flag'] != 'WARN'] #Filters out variants with WARN flag
     df = df.rename(columns = {'consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
     df = df.loc[df['Consequence'].str.contains('missense_variant')] #Filters only for missense variants
     
@@ -100,6 +101,9 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
     # Show surface only on the new object
     cmd.hide("everything", surface_name)
     cmd.show(surface_type, surface_name)
+
+    # First, color everything gray as default
+    cmd.color("gray", surface_name)
     
     # Color mapping function
     def map_value_to_color(value, min_val, max_val, palette):
