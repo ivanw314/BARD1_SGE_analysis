@@ -42,7 +42,7 @@ elif figure_type == 'ARD':
 elif figure_type == 'BRCT':
     print("Generating BRCT figure")
     if gene == 'BARD1':
-        chain = 'A'
+        chain = 'B'
         pdb_id = '3FA2'
         sphere_resi = [575, 576, 617, 619]
     elif gene == 'BRCA1':
