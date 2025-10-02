@@ -17,6 +17,8 @@ file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx
 
 domain = 'RING' #Domain being colored (RING, BRCT)
 analysis_type = 'min' #mininum or mean score used for coloring (min, mean)
+show_legend = False #Whether to show the legend figure
+save_legend = True #Whether to save the legend figure
 
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
@@ -152,9 +154,9 @@ cmap_name = 'gray_to_red'
 custom_cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins) #makes the color map 
 
 def create_colorbar_legend():
-    # Create figure with vertical proportions
-    fig, ax = plt.subplots(figsize=(1.5, 5))
-    fig.subplots_adjust(left=0.6)  # Adjust for labels on left
+    # Create figure with horizontal proportions
+    fig, ax = plt.subplots(figsize=(1, 0.5))
+    fig.subplots_adjust(bottom=0.5)
     
     # Reverse the colormap to match your get_color inversion
     reversed_cmap = custom_cmap.reversed()
@@ -164,18 +166,15 @@ def create_colorbar_legend():
     sm = cm.ScalarMappable(cmap=reversed_cmap, norm=norm)
     sm.set_array([])
     
-    # Create vertical colorbar
-    cbar = plt.colorbar(sm, cax=ax, orientation='vertical')
-    
-    # Move ticks and labels to the left
-    cbar.ax.yaxis.set_ticks_position('left')
-    cbar.ax.yaxis.set_label_position('left')
+    # Create horizontal colorbar
+    cbar = plt.colorbar(sm, cax=ax, orientation='horizontal')
     
     # Labels now directly correspond to your data range
-    cbar.set_ticks([-1.5, -1, -0.5, 0])
-    cbar.set_label('Score', rotation=90, labelpad=20)  # Changed rotation to 90
+    cbar.set_ticks([-1.5, 0])
+    cbar.set_label('Score', labelpad=10)
     
-    #plt.show()
+    if show_legend:
+        plt.show()
     return fig
 
 def get_color(value): #Gets color for each residue from mean score
@@ -188,7 +187,9 @@ def main():
     residue_values = make_residue_values(filtered, num, coords, domain, analysis_type) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
     legend = create_colorbar_legend()
-    #legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BRCA1_legend.png', dpi = 500)
+
+    if save_legend:
+        legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BRCA1_legend.png', dpi = 500)
 
     #this block does the coloring
     for residue, value in normalized_values.items(): 

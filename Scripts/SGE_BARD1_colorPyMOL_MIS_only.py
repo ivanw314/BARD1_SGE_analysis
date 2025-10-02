@@ -16,7 +16,8 @@ chain = 'B' #Chain in the PDB structure to color (A, B, etc)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
 file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #SGE Score file
 
-
+show_legend = False #Whether to show the legend figure
+save_legend = True #Whether to save the legend figure
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
 ring = [(214809412,214809494),(214797061, 214797117), (214792298,214792445)] #RING (1JM7)
@@ -152,10 +153,11 @@ def create_colorbar_legend():
     cbar = plt.colorbar(sm, cax=ax, orientation='horizontal')
     
     # Labels now directly correspond to your data range
-    cbar.set_ticks([-0.2, -0.1, 0])
+    cbar.set_ticks([-0.2, 0])
     cbar.set_label('Score', labelpad=10)
     
-    #plt.show()
+    if show_legend:
+        plt.show()
     return fig
 
 
@@ -173,8 +175,9 @@ def main():
     residue_values = make_residue_values(filtered, num, coords, offset, analysis) #Makes per-residue mean scores
     normalized_values = normalize_values(residue_values) #Scores normalized to between 0 and 1
     legend = create_colorbar_legend()
-    
-    #legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BARD1_legend.png', dpi = 500)
+
+    if save_legend:
+        legend.savefig('/Users/ivan/Desktop/BARD1_draft_figs/fig5a_BARD1_legend.png', dpi = 500)
     present_residues = list(normalized_values.keys())
     
     for resi in expected_residues:
