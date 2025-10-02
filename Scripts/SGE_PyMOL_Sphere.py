@@ -56,6 +56,7 @@ if gene == 'BARD1':
     score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx'
     score_df = pd.read_excel(score_file, sheet_name='scores')
     score_df = score_df.loc[(~score_df['amino_acid_change'].isin(['---'])) & (score_df['var_type'].isin(['snv']))]
+    score_df = score_df.loc[score_df['consequence'].isin(['missense_variant'])]
     score_df = score_df.loc[~score_df['variant_qc_flag'].isin(['WARN'])]
 
     phospho_site_override = pd.DataFrame({'pos_id': ['214745805:A','214745805:G', '214745806:A', '214745806:G', '214745806:T' ,'214745805:T', '214745119:A', '214745119:C', '214745119:T', '214745121:A', '214745121:C', '214745121:G', '214745120:T','214745121:A','214745120:A'],
