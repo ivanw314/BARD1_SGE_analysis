@@ -19,16 +19,22 @@ from pymol.cgo import *
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Desktop/20240830_BRCA1_SGE_AllScores.xlsx' #BRCA1 SGE scores file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx' #BRCA1 SGE scores file
 
 region = 'BRCT'
+analysis_type = 'min' #Options are 'mean' or 'min' for mean or minimum score coloring
+
 #This block contains the list of tuples corresponding to which regions in the 
 #data map to which structural domains in the provided PDB structure
-#regions = [(1,301)] #BRCA1 RING from 1JM7
-regions = [(4945,5565)] #BRCA1 BRCT from 1T29
+if region == 'RING':
+    regions = [(1,301)] #BRCA1 RING from 1JM7
+elif region == 'BRCT':
+    regions = [(4945,5565)] #BRCA1 BRCT from 1T29
+else:
+    raise ValueError("Region not recognized. Please choose 'RING' or 'BRCT'.")
 
 def read_scores(file): #Reads and filters the score files
-    excel = pd.read_excel(file) #Reads excel file into df
+    excel = pd.read_excel(file, sheet_name = 'findlay_2018') #Reads excel file into df
     data = excel[['target','pos','Consequence','snv_score_minmax']] #pulls out these relevant columns
     return data
 
@@ -65,7 +71,11 @@ def make_residue_values(data, num, coords): #Gets mean score for all codons
     while j < num:
         data_filt = data.copy() #copy of data for each loop 
         data_filt = data[data['pos'].isin(codon_lists[j])] #data filtered so that you get data for just one codon
-        mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
+
+        if analysis_type == 'mean':
+            mean = data_filt['snv_score_minmax'].mean() #mean of scores is taken
+        elif analysis_type == 'min':
+            mean = data_filt['snv_score_minmax'].min() #min of scores is taken
 
         #offset needed to assign correct residue number in PyMOL structure
         offset = 1649 #offset in PyMOL structure (what is the number of the AA that starts the coloring?) (1 for RING, 1649 for BRCT)
@@ -106,6 +116,9 @@ def color_surface_by_property(property_dict=None, chain="A", selection="all", pa
     # Combine chain selection with any additional selection criteria
     full_selection = f"({selection}) and chain {chain}"
     
+    # First, color everything gray as default
+    
+
     # Set up surface settings
     cmd.set("transparency", 0.5)
     cmd.set("surface_quality", 1)  # Ensure good surface quality
@@ -176,10 +189,12 @@ def color_surface_by_property_beta(property_dict=None, chain="A", selection="all
     # Combine chain selection with any additional selection criteria
     full_selection = f"({selection}) and chain {chain}"
     
+
+    
     # Create a new object for the surface
     cmd.create(surface_name, full_selection)
     
-    
+    cmd.color("gray", surface_name)
     # Show surface only on the new object
     cmd.hide("everything", surface_name)
     cmd.show(surface_type, surface_name)
@@ -240,11 +255,12 @@ def main():
     cmd.extend("color_surface_by_property", color_surface_by_property)
     
     #color_surface_by_property(property_dict = mean_scores, palette = 'rw', show_scale = True)
-    scores = [(residue_values,'SGE_BRCA1_surface_mean')]
+
+    surface_name = "SGE_BRCA1_surface" + "_" + analysis_type + "_" + region
+    scores = [(residue_values,surface_name)]
     
     for elem in scores:
         scores, surface_name = elem
-        surface_name = surface_name + "_" + region
         color_surface_by_property_beta(chain = 'A', property_dict = scores, palette = 'rw', 
                                        transparency = 0.5, surface_name = surface_name)
 main()
