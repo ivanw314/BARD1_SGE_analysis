@@ -12,7 +12,7 @@ from pymol import cmd
 from pymol.cgo import *
 
 sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx' #File of SGE scores
-region = 'RING' #Structured BARD1 regions to create surface for
+region = 'BRCT' #Structured BARD1 regions to create surface for
 chain = 'B' #Specify chain to color 
 
 def region_residues(region): #Takes region input and creates the respective residue numbers
@@ -39,9 +39,17 @@ def read_scores(file, region_resi): #Reads score file
     df = df.loc[df['variant_qc_flag'] != 'WARN'] #Filters out variants with WARN flag
     df = df.rename(columns = {'consequence': 'Consequence', 'amino_acid_change': 'AAsub', 'score': 'snv_score'})
     df = df.loc[df['Consequence'].str.contains('missense_variant')] #Filters only for missense variants
-    
-    df['AApos'] = df['AAsub'].transform(lambda x: x[1:-1]) #Creates new amino acid position column 
-    
+
+    df['AApos'] = df['AAsub'].transform(lambda x: x[1:-1]) #Creates new amino acid position column
+
+    #Phosphosite site overrides
+    phospho_site_override = pd.DataFrame({'pos_id': ['214745805:A','214745805:G', '214745806:A', '214745806:G', '214745806:T' ,'214745805:T', '214745119:A', '214745119:C', '214745119:T', '214745121:A', '214745121:C', '214745121:G', '214745120:T','214745121:A','214745120:A'],
+                                           'score': [-0.109977, -0.0175886, -0.0298891, -0.00470975, -0.0413407, 0.0208659, -0.00814722, -0.00228625, 0.00051614, -0.00129351, 0.018338, -0.0955636,  -0.0116846, -0.0049156, -0.0441137],
+                                           'amino_acid_change': ['G576V', 'G576A', 'G576C', 'G576R', 'G576S', 'G576D', 'T617T', 'T617T', 'T617T', 'T617S', 'T617A', 'T617P', 'T617N', 'T617S','T617I'],
+                                           'functional_consequence': ['functionally_abnormal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'indeterminate', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_normal', 'functionally_abnormal', 'functionally_normal', 'functionally_normal', 'indeterminate'],
+                                           'AApos': ['576', '576', '576', '576', '576', '576', '617', '617', '617', '617', '617', '617', '617', '617', '617']
+                                          })
+    df = pd.concat([df, phospho_site_override]) #Adds phosphosite overrides to score dataframe
     df = df.loc[df['AApos'].isin(region_resi)] #Filters for variants in residues in region of interest
     
     return df
