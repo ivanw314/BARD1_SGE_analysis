@@ -124,8 +124,10 @@ classification_df = classification_df.rename(columns={'aa_pos': 'resi', 'functio
 classification_df['sphere_size'] = classification_df['n_variants'].apply(lambda x: base_sphere_size + (x - 1) * size_increment)
 
 classification_df['color'] = 'gray' # Default color
-classification_df.loc[(classification_df['min_LoF_pro'] == 'True') & (classification_df['n_variants']  == 1), 'color'] = 'lightblue'  # Color for positions with at least one LoF_pro=True variant
-#classification_df.loc[(classification_df['min_LoF_pro'] == 'True'), 'color'] = 'lightblue'
+
+if figure_type == 'ARD':
+    classification_df = classification_df.loc[(classification_df['min_LoF_pro'].isin(['False'])) & (classification_df['n_variants']  >= 2)] #Filtering to only positions with at least one functionally abnormal variant
+
 print(classification_df)
 
 # ============================================================================
