@@ -6,11 +6,11 @@ from pymol import cmd, stored
 #Script adapted from S. Fayer
 base_sphere_size = 0.5  # Starting size for sphere
 size_increment = 0.1  # Size increase per variant below threshold
-keep_structures = True # Whether to keep existing structures in PyMOL session
+keep_structures = False # Whether to keep existing structures in PyMOL session
 
 # Figure definitions
 gene = 'BARD1' #Change to BRCA1 for RING and BRCT comparisons
-figure_type = 'RING' #RING E2 (RING), ARD (ARD H4 interaction), BRCT (BRCT phosphopeptide interaction)
+figure_type = 'ARD' #RING E2 (RING), ARD (ARD H4 interaction), BRCT (BRCT phosphopeptide interaction)
 
 obj_name = f"{gene}_{figure_type}_spheres" #Object name
 
@@ -37,7 +37,7 @@ elif figure_type == 'ARD':
     print("Generating ARD figure")
     pdb_id = '7LYC'
     chain = 'N'
-    sphere_resi = [429, 458, 462, 467, 470, 500]
+    sphere_resi = list(range(421, 547))
 
 elif figure_type == 'BRCT':
     print("Generating BRCT figure")
@@ -105,14 +105,27 @@ elif gene == 'BRCA1':
 
 
 score_df = score_df[score_df['aa_pos'].isin(sphere_resi)]
+score_df['nAA'] = score_df['amino_acid_change'].transform(lambda x: x[-1])
 
-classification_df = score_df.groupby(['aa_pos', 'functional_consequence']).size().reset_index()
+score_df['LoF_pro'] = 'False'
+score_df.loc[(score_df['functional_consequence'] == 'functionally_abnormal') & (score_df['nAA'] == 'P'), 'LoF_pro'] = 'True'
+
+score_df['LoF_pro'] = pd.Categorical(score_df['LoF_pro'], categories=['True', 'False'], ordered=True)
+
+classification_df = score_df.groupby(['aa_pos', 'functional_consequence']).agg(
+    count=('LoF_pro', 'size'),
+    min_LoF_pro=('LoF_pro', 'min')
+).reset_index()
 
 classification_df = classification_df.loc[classification_df['functional_consequence'].isin(['functionally_abnormal'])]
 
-classification_df = classification_df.rename(columns={'aa_pos': 'resi', 'functional_consequence': 'classification', 0: 'n_variants'})
+classification_df = classification_df.rename(columns={'aa_pos': 'resi', 'functional_consequence': 'classification', 'count': 'n_variants'})
 
 classification_df['sphere_size'] = classification_df['n_variants'].apply(lambda x: base_sphere_size + (x - 1) * size_increment)
+
+classification_df['color'] = 'gray' # Default color
+classification_df.loc[(classification_df['min_LoF_pro'] == 'True') & (classification_df['n_variants']  == 1), 'color'] = 'lightblue'  # Color for positions with at least one LoF_pro=True variant
+#classification_df.loc[(classification_df['min_LoF_pro'] == 'True'), 'color'] = 'lightblue'
 print(classification_df)
 
 # ============================================================================
@@ -142,7 +155,7 @@ cmd.color("lightblue", obj_name)
 for idx, row in classification_df.iterrows():
     pos = int(row['resi'])
     sphere_size = float(row['sphere_size'])
-    
+    color = row['color']
     # Check if glycine (use CA) or other amino acids (use CB)
     stored.resn_list = []
     cmd.iterate(f"{obj_name} and resi {pos} and name CA", "stored.resn_list.append(resn)")
@@ -154,7 +167,7 @@ for idx, row in classification_df.iterrows():
     
     # Show sphere with specified size
     cmd.show("spheres", atom_sel)
-    cmd.color("gray", atom_sel)
+    cmd.color(color, atom_sel)
     cmd.set("sphere_scale", sphere_size, atom_sel)
 
 # Final styling
