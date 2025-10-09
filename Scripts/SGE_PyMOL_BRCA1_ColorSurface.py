@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb  6 11:06:12 2025
 
-@author: ivan
+"""
+This script generates a space-filling model of BRCA1 RING/BRCT in PyMOL based on SGE scores. Used in Figure 6D
 """
 
 import pandas as pd
@@ -19,7 +16,7 @@ from pymol.cgo import *
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx' #BRCA1 SGE scores file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BRCA1_SGE_data.xlsx' #BRCA1 SGE scores file
 
 region = 'BRCT'
 analysis_type = 'min' #Options are 'mean' or 'min' for mean or minimum score coloring
