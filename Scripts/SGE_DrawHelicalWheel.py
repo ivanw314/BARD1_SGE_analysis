@@ -16,7 +16,7 @@ import matplotlib.patches as mpatches
 # File paths
 # Update these paths to the correct locations of your files
 bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BARD1_SGE_final_table.xlsx'
-brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BRCA1_SGE_data.xlsx'
+brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx'
 brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay et al. 2018
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'

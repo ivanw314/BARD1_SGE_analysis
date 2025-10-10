@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BRCA1_SGE_data.xlsx' #Combined BRCA1 score file (Findlay et al. 2018 + Dace et al. 2025)
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx' #Combined BRCA1 score file (Findlay et al. 2018 + Dace et al. 2025)
 
 domain = 'RING' #Domain being colored (RING, BRCT)
 analysis_type = 'min' #mininum or mean score used for coloring (min, mean)

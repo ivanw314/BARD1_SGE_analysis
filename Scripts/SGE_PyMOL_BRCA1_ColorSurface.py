@@ -16,7 +16,7 @@ from pymol.cgo import *
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BRCA1_SGE_data.xlsx' #BRCA1 SGE scores file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx' #BRCA1 SGE scores file
 
 region = 'BRCT'
 analysis_type = 'min' #Options are 'mean' or 'min' for mean or minimum score coloring

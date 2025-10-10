@@ -72,7 +72,7 @@ if gene == 'BARD1':
     score_df = pd.concat([score_df, phospho_site_override])
     score_df['aa_pos'] = score_df['amino_acid_change'].transform(lambda x: int(x[1:-1]))
 elif gene == 'BRCA1':
-    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BRCA1_SGE_data.xlsx'
+    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx'
     old_brca1_data = pd.read_excel(score_file, sheet_name='findlay_2018')
     brca1_data = pd.read_excel(score_file, sheet_name= 'dace_2025')
 
