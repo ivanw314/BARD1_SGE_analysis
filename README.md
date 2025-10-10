@@ -43,8 +43,11 @@ These scripts are:
 ## Data
 The data folder contains sub-directories containing all supplementary tables and data needed to generate figures. Data used to recompile provided supplementary data tables is also provided. 
 
-## case_control_data
-Contains data accessed from the BRIDGES and CARRIERS breast cancer case-control studies. Data for each study is organized into its respective folder:
+## extra_data
+Contains all external data used for analysis and figure generation, such as: BRIDGES and CARRIERS case-control data and BRCA1 SGE data
+* BRCA1_SGE_data.xlsx - Contains BRCA1 SGE data from Findlay et al. 2018 and Dace et al. 2025 in separate tabs
+
+The case_control_data sub-folder contains data accessed from the BRIDGES and CARRIERS breast cancer case-control studies. Data for each study is organized into its respective folder:
 * BRIDGES_data - Contains all data files from the BRIDGES study
   * 20250815_BRIDGES_missense_all.xlsx - All missense variants sequenced in the BRIDGES study
   * 20250815_BRIDGES_missense_population.xlsx - Missense variants only from population-based studies that were part of the BRIDGES study
@@ -55,10 +58,12 @@ Contains data accessed from the BRIDGES and CARRIERS breast cancer case-control 
   * 20250303_CARRIERS_data.xlsx - Contains all variants sequenced in the CARRIERS case-control study.
  
 ## final_data_tables
-Contains all final supplmentary tables and external data used for analyses and figures
-* BRCA1_SGE_data.xlsx - Contains BRCA1 SGE data from Findlay et al. 2018 and Dace et al. 2025 in separate tabs
+Contains all final supplmentary tables. Includes final table for figure generation, output of case-control analysis, and all oligos used in experiments
+* BARD1_all_oligos.xlsx - Multi-tabbed file containing sequences and dsecriptions of all oligos used in experiments
+* BARD1_OddsRatios_table.xlsx - Supplmentary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study.
 * BARD1_SGE_final_table.xlsx - Large supplmentary table containing all data from this study in multiple tabs. Used as input for all figure generation and analysis
-* BARD1_OddsRatios_table.xlsx - Supplmentary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study. 
+
+Description of column keys can all be found in the column_keys sub-folder
 
 ### supp_table_inputs
 Files used to create the BARD1_final_table supplementary table are found in the **supp_table_inputs** sub-directory. Files are dated based on when they were originally created/when data was accessed These files are: 
