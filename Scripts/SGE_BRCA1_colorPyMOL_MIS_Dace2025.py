@@ -4,6 +4,7 @@ import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 
+# Script to color BRCA1 structures based on SGE data from Findlay et al. 2018 and Dace et al. 2025. Used to build figure 6A. Can be used to build similar cartoons for the BRCT of BRCA1 as well.
 
 #This script isn't super user-friendly but here's the run down:
 #First, please make sure the correct file is selected
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 #BE SURE TO SET THE OFFSET IN PYMOL and set coloring based on chains in the
 #make_residue_values() function
 
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx' #Combined BRCA1 score file (Findlay et al. 2018 + Dace et al. 2025)
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx' #Combined BRCA1 score file (Findlay et al. 2018 + Dace et al. 2025)
 
 domain = 'RING' #Domain being colored (RING, BRCT)
 analysis_type = 'min' #mininum or mean score used for coloring (min, mean)

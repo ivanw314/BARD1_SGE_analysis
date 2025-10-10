@@ -1,3 +1,8 @@
+'''
+Script to generate helical wheel plots for BARD1 and BRCA1 helices based on aggregated functional scores from saturation genome editing data. 
+Used to build figure 6B
+'''
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,14 +15,14 @@ import matplotlib.patches as mpatches
 
 # File paths
 # Update these paths to the correct locations of your files
-bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BARD1_SGE_final_table.xlsx'
-brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/BRCA1_SGE_data.xlsx'
+bard1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BARD1_SGE_final_table.xlsx'
+brca1_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/extra_data/BRCA1_SGE_data.xlsx'
 brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay et al. 2018
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
 analysis_type = 'min_NP'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
-save_fig = True # Whether to save the figure
-show_fig = False # Whether to display the figure
+save_fig = False # Whether to save the figure
+show_fig = True # Whether to display the figure
 if analysis_type not in ['min', 'min_NP']:
     raise ValueError("Invalid analysis type specified. Please choose 'min' or 'min_NP'.")
 
