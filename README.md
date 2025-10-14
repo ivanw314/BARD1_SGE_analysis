@@ -24,8 +24,9 @@ The case_control_data sub-folder contains data accessed from the BRIDGES and CAR
 ## final_data_tables
 Contains all final supplmentary tables. Includes final table for figure generation, output of case-control analysis, and all oligos used in experiments
 * BARD1_all_oligos.xlsx - Multi-tabbed file containing sequences and dsecriptions of all oligos used in experiments
-* BARD1_OddsRatios_table.xlsx - Supplmentary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study.
+* BARD1_OddsRatios_table.xlsx - Supplmentary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study (Table S1)
 * BARD1_SGE_final_table.xlsx - Large supplmentary table containing all data from this study in multiple tabs. Used as input for all figure generation and analysis
+* variant_reclass_table.xlsx - Multi-tabbed file containing controls, OddsPath calculations, and evidence used in relcassification of VUS (Table S2)
 
 Description of column keys can all be found in the column_keys sub-folder
 
