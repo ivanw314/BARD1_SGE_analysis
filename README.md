@@ -23,12 +23,12 @@ The case_control_data sub-folder contains data accessed from the BRIDGES and CAR
  
 ## final_data_tables
 Contains all final supplmentary tables. Includes final table for figure generation, output of case-control analysis, and all oligos used in experiments
-* BARD1_all_oligos.xlsx - Multi-tabbed file containing sequences and dsecriptions of all oligos used in experiments
+* BARD1_all_oligos.xlsx - Multi-tabbed file containing sequences and dsecriptions of all oligos used in experiments (Supplementary File 2)
 * BARD1_OddsRatios_table.xlsx - Supplmentary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study (Supplementary Table 1)
 * BARD1_SGE_final_table.xlsx - Large supplmentary table containing all data from this study in multiple tabs. Used as input for all figure generation and analysis (Supplementary File 1)
 * variant_reclass_table.xlsx - Multi-tabbed file containing controls, OddsPath calculations, and evidence used in relcassification of VUS (Supplementary Table 2)
 
-Description of column keys can all be found in the column_keys sub-folder
+Description of column keys can all be found in the column_keys sub-folder. Files are named after their respective final_data_table
 
 ### supp_table_inputs
 Files used to create the BARD1_final_table supplementary table are found in the **supp_table_inputs** sub-directory. Files are dated based on when they were originally created/when data was accessed These files are: 
@@ -78,6 +78,7 @@ These notebooks are:
 * **SGE_MakeFinalDataTable** - Builds BARD1_final_table supplementary table - the required input for all figure generating notebooks. Requires all files in /BARD1_SGE_analysis/Data/supp_table_inputs. 
 * SGE_OrthogonalAssays - Generates histogram and strip plot showing distribution of SGE scores for variants assayed in orthogonal functional assays (Extended Data Fig. 5a).
 * SGE_PaperNumberGenerator - Generates numerical values used throughout the main text.
+* SGE_ReClassFig - Generates dot plot of points received by each variant after applying BARD1 functional data (Fig 4d.)
 * SGE_RNAanalysis - Builds scatter plot of RNA score vs. SGE score (Fig. 5c) and RNA score vs. SGE score stem plots (Fig. 5d & Extended Data Fig. 7). 
 * SGE_VEPs_vs_SGE - Creates scatter plots of predictor score vs. SGE score (Extended Data Fig. 5b) and case-control analysis of variants with moderate evidence towards benignity/pathogenicty from predictors (Extended Data Fig. 5c).
 * SGE_ZnBindingAnalysis - Analysis of missense variants impacting Zn2+ coordinating residues in BARD1's RING domain. Generates strip plot (Extended Data Fig. 9) and comparative analysis with BRCA1. **(Needs BRCA1 SGE File)**
