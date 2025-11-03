@@ -9,7 +9,7 @@ The data folder contains sub-directories containing all supplementary tables, da
 
 ## extra_data
 Contains all external data used for analysis and figure generation, such as: BRIDGES and CARRIERS case-control data and BRCA1 SGE data
-* BRCA1_SGE_data.xlsx - Contains BRCA1 SGE data from Findlay et al. 2018 and Dace et al. 2025 in separate tabs
+* BRCA1_SGE_data.xlsx - Contains BRCA1 SGE data from Findlay et al. 2018 and Dace et al. 2025 in separate tabs **(BRCA1 SGE File)**
 
 The case_control_data sub-folder contains data accessed from the BRIDGES and CARRIERS breast cancer case-control studies. Data for each study is organized into its respective folder:
 * BRIDGES_data - Contains all data files from the BRIDGES study
@@ -45,16 +45,16 @@ Files used to create the BARD1_final_table supplementary table are found in the 
 * 20251002_BARD1delscores.tsv - Raw 3bp deletion scores
 * 20251002_BARD1modelparam.tsv - Output parameters from GMM modeling. Gives best estimated thresholds for functional class classification
 * 20251002_BARD1_snvs_VEP.xlsx - Ensembl VEP annotated SNVs files
-* 20251002_BARD1snvscores.tsv - Raw SNV scores
+* 20251002_BARD1snvscores.tsv - Raw SNV scores **(SGE SNV file)**
 * 20251002_BARD1snvscores.vcf - .VCF file input for Ensemble VEP annotation of SNVs (to variant effect predictor scores)
 * 20251006_BARD1_MutPred2.xlsx - MutPred2 scores for coding missense SNVs
 * 20251008_PhyloP.xlsx - PhyloP scores across BARD1
 
 The supp_table_inputs sub-directory also contains two additional folders
 * ATG_lib_data - Contains all data needed to recompute results from the X1A_ATG double mutant experiment
-  * X1A_annotations.xlsx - Contains variant annotations for library X1A
+  * X1A_annotations.xlsx - Contains variant annotations for library X1A **(X1A annotations file)**
   * 20250409_BARD1_X1A_ATG_scored.xlsx - Raw scores from the X1A_ATG double mutant experiment 
-  * counts - Folder contains .tsv files with raw counts of variants for each replicate
+  * counts - Folder contains .tsv files with raw counts of variants for each replicate **(ATG counts folder)**
 * depth_data - Contains all data needed to recompute normalized depth values
   * deletion_inputs.xlsx - Contains coordinates for start and stop of each BARD1 coding exon
   * depth_files - Folder contains read depths at each base for each library and replicate
@@ -71,8 +71,8 @@ These notebooks are:
 * SGE_CaseControlAnalysis - Case-control analysis of BARD1 variants using the BRIDGES and CARRIERS breast cancer case-control cohorts. Output used in Fig. 3d and the BARD1_OddsRatios_table supplementary table. **(Needs BRIDGES and CARRIERS data)**
 * SGE_ClinVar_analysis - Generates strip plot of ClinVar variants seen in SGE and does ROC analysis (Figs. 3b-c).
 * SGE_CorrelationMatrix_Heatmap - Generates Pearson's r boxplots across timepoints and regions and a Pearson r heatmap across all SGE sub-targets (Extended Data Fig. 1b-c).
-* SGE_DeletionFigure_ReadDepth - Generates 3 figures: 1) Line plot of median read depth across all coding regions in BARD1 (Extended Data Fig. 4), 2) 3bp deletion map across BARD1 (Fig 2A) and 3) heatmap of scores across BARD1 (Fig. 2b).
-* SGE_EditRate_BarPlot - Generates SGE target-faceted bar plot showing editing rate generating useable reads across all targets and replicates (Extended Data Fig. 1a).
+* SGE_DeletionFigure_ReadDepth - Generates 3 figures: 1) Line plot of median read depth across all coding regions in BARD1 (Extended Data Fig. 4), 2) 3bp deletion map across BARD1 (Fig. 2a) and 3) heatmap of scores across BARD1 (Fig. 2b).
+* SGE_EditRate_BarPlot - Generates SGE target-faceted bar plot showing editing rate generating usable reads across all targets and replicates (Extended Data Fig. 1a).
 * SGE_Histogram_Stripplot - Creates histogram (top) and strip plot (bottom) of all BARD1 SGE scores (Figs. 1b-c).
 * SGE_MAFvsSGEScore - Creates 2D heatmap of MAF (retrieved from gnomAD and Regeneron Million Exomes) vs. SGE score (Fig. 3a).
 * **SGE_MakeFinalDataTable** - Builds BARD1_final_table supplementary table - the required input for all figure generating notebooks. Requires all files in /BARD1_SGE_analysis/Data/supp_table_inputs. 
