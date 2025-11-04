@@ -1,6 +1,6 @@
 
 """
-This script generates a space-filling model of BRCA1 RING/BRCT in PyMOL based on SGE scores. Used in Figure 6D
+This script generates a space-filling model of BRCA1 RING/BRCT in PyMOL based on SGE scores. Used in Fig. 6d
 """
 
 import pandas as pd

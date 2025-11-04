@@ -1,7 +1,7 @@
 
 """
 This script generates space-filling surfaces in PyMOL for specified structured regions of the BARD1 protein (RING, ARD, BRCT, ARDBRCT) and colors these surfaces based on SGE scores.
-Used to generate figures 6D and S10  
+Used to generate Fig. 6d and Extended Data Fig. 10 
 """
 
 
@@ -9,7 +9,7 @@ import pandas as pd
 from pymol import cmd
 from pymol.cgo import *
 
-sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BARD1_SGE_final_table.xlsx' #File of SGE scores
+sge_scores = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/supplementary_file_1_BARD1_SGE_final_table.xlsx' #File of SGE scores
 region = 'BRCT' #Structured BARD1 regions to create surface for
 chain = 'B' #Specify chain to color 
 

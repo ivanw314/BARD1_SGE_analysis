@@ -4,7 +4,7 @@ from pymol import cmd, stored
 
 # === Parameters ===
 #Script adapted from S. Fayer
-#This script generates figure 6C. Similar figures with spheres can also be generated for all other BARD1 domains and BRCA1 RING/BRCT domains.
+#This script generates Fig. 6c. Similar figures with spheres can also be generated for all other BARD1 domains and BRCA1 RING/BRCT domains.
 
 
 base_sphere_size = 0.5  # Starting size for sphere
@@ -56,7 +56,7 @@ elif figure_type == 'BRCT':
 
 # Load your score data
 if gene == 'BARD1':
-    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BARD1_SGE_final_table.xlsx'
+    score_file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/supplementary_file_1_BARD1_SGE_final_table.xlsx'
     score_df = pd.read_excel(score_file, sheet_name='scores')
     score_df = score_df.loc[(~score_df['amino_acid_change'].isin(['---'])) & (score_df['var_type'].isin(['snv']))]
     score_df = score_df.loc[score_df['consequence'].isin(['missense_variant'])]
