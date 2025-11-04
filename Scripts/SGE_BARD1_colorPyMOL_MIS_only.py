@@ -4,7 +4,7 @@ import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 
-#This script generates colored ribbon structures in PyMOL based on SGE scores. Used in figure 6A. Can be used to build similar structures for all other domains
+#This script generates colored ribbon structures in PyMOL based on SGE scores. Used in figure 6a. Can be used to build similar structures for all other domains
 
 #This script isn't super user-friendly but here's the run down:
 #Simply enter the region name and analysis type in the User-provided inputs block
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 region = 'RING' #Hardcode the region name here (RING, ARD, BRCT)
 chain = 'B' #Chain in the PDB structure to color (A, B, etc)
 analysis = 'min' #mininum or mean score used for coloring (min, mean)
-file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/BARD1_SGE_final_table.xlsx' #SGE Score file
+file = '/Users/ivan/Documents/GitHub/BARD1_SGE_analysis/Data/final_tables/supplementary_file_1_BARD1_SGE_final_table.xlsx' #SGE Score file
 
 show_legend = False #Whether to show the legend figure
 save_legend = True #Whether to save the legend figure

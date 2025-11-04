@@ -1,3 +1,8 @@
+'''
+This script colors BRCA1 structures in PyMOL based on SGE data from Findlay et al. 2018 and Dace et al. 2025.
+It is used to build Fig. 6a and can be adapted for other domains such as the BRCT of BRCA1.
+'''
+
 from pymol import cmd
 import pandas as pd
 import matplotlib.cm as cm
