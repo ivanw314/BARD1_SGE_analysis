@@ -21,7 +21,7 @@ brca1_cutoffs = [-1.328,-0.748] #Estimated GMM thresholds for BRCA1 from Findlay
 #Figure Saving Path
 path = '/Users/ivan/Desktop/BARD1_draft_figs/'
 analysis_type = 'min_NP'  # This new updated script using new BRCA1 data no longer supports mean/mean_NP analysis types (min/min_NP). minimum missense score or minimum score w/out proline substitutions
-save_fig = False # Whether to save the figure
+save_fig = True # Whether to save the figure
 show_fig = True # Whether to display the figure
 if analysis_type not in ['min', 'min_NP']:
     raise ValueError("Invalid analysis type specified. Please choose 'min' or 'min_NP'.")
@@ -48,9 +48,35 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
     } #Dictionary for converting 3-letter amino acid codes to 1-letter codes
 
     bard1_data = pd.read_excel(bard1_file, sheet_name = 'scores') #Reads the BARD1 data from an Excel file
+
+    valid_aas = set(aa_3to1.values()) #Set of valid one-letter amino acid codes, used to validate parsed wild-type residues below
+    bard1_wt_lookup = {} #Position -> wild-type one-letter amino acid, built from ALL rows (any var_type/consequence) so positions with no missense/SNV data (e.g. only covered by an indel) are still known
+    for aac in bard1_data['amino_acid_change'].astype(str):
+        try:
+            letter, pos = aac[0], int(aac[1:-1])
+        except ValueError:
+            continue
+        if letter in valid_aas:
+            bard1_wt_lookup[pos] = letter
+
     bard1_data = bard1_data.loc[bard1_data['var_type'].isin(['snv'])] #Pulls only single nucleotide variants
     brca1_data = pd.read_excel(brca1_file, sheet_name = 'dace_2025') #Reads the BRCA1 data from an Excel file
     old_brca1_data = pd.read_excel(brca1_file, sheet_name = 'findlay_2018') #Reads the Findlay 2018 BRCA1 data from an Excel file
+
+    brca1_wt_lookup = {} #Position -> wild-type one-letter amino acid, built from ALL rows (any Consequence) across both BRCA1 sources, so positions with no missense data are still known
+    for pos, oaa in zip(brca1_data['protPos'], brca1_data['oAA']):
+        try:
+            brca1_wt_lookup[int(pos)] = oaa
+        except (TypeError, ValueError):
+            continue
+    for hgvs in old_brca1_data['hgvs_pro']:
+        try:
+            hgvs_pro_part = hgvs.split(':')[1].split('.')[1]
+            pos = int(hgvs_pro_part[3:-3])
+            letter = aa_3to1[hgvs_pro_part[0:3]]
+        except (IndexError, KeyError, ValueError):
+            continue
+        brca1_wt_lookup.setdefault(pos, letter)
 
     #Helix residues for BARD1: [34, 48] and [98, 117]
     #Helix residues for BRCA1: [7, 22] and [80, 97]
@@ -102,7 +128,7 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
         elem = bard1_helix_residues[i] #Gets helix residues for the current helix
         data = bard1_data.loc[bard1_data['AApos'].astype(int).isin(elem)] #Gets data for the current helix residues
 
-        all_residues = list(set(data['amino_acid'].tolist())) #List of all residues present in the data for the current helix
+        all_residues = [bard1_wt_lookup[pos] + str(pos) for pos in elem if pos in bard1_wt_lookup] #List of all residues expected in this helix (from the full lookup), regardless of whether they have missense/SNV data
         data = data.loc[~data['variant_qc_flag'].isin(['WARN'])]
 
         #Aggregates the data based on the selected type of analysis
@@ -142,6 +168,8 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
         elem = brca1_helix_residues[i]
         data = brca1_data.loc[brca1_data['AApos'].astype(int).isin(elem)]
 
+        all_residues = [brca1_wt_lookup[pos] + str(pos) for pos in elem if pos in brca1_wt_lookup] #List of all residues expected in this helix (from the full lookup), regardless of whether they have missense data
+
         if type == 'min':
             data['function_class'] = pd.Categorical(data['function_class'], categories=['LoF', 'Intermediate', 'Neutral'], ordered=True)
             to_return = data.groupby('AApos').agg({'function_class': 'min',
@@ -158,6 +186,10 @@ def read_process_data(bard1_file, brca1_file, bard1_cutoffs, type): #Reads and p
 
         to_return['AApos'] = to_return['AApos'].astype(int)
 
+        missing_residues = list(set(all_residues) - set(to_return['amino_acid'].tolist())) #Finds residues missing from the aggregated data
+        for res in missing_residues: #Adds missing residues with default gray color
+            new_row = pd.DataFrame({'AApos': [int(res[1:])], 'amino_acid': [res], 'function_class': ['no_data'], 'median_consequence': [0]}) #Creates a new row for the missing residue with gray color
+            to_return = pd.concat([to_return, new_row], ignore_index=True)
 
         to_return.sort_values(by='AApos', inplace=True)
         if helix_list[i] ==  'helix_2':
@@ -275,7 +307,7 @@ def missense_draw_wheel(sequence, path, resi_dict, helix_name, num_residues, x_a
     if show_fig:
         plt.show()
     if save_fig:
-        fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.png', bbox_inches='tight', dpi=500, transparent=True)
+        fig.savefig(path + 'fig_5b_' + helix_name + '_newBRCA1.svg', bbox_inches='tight', dpi=500, transparent=True)
     #fig.show()
     return fig, ax
 
