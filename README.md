@@ -7,7 +7,7 @@ Required supplementary data tables and paths are already set for all notebooks. 
 ## Data
 The data folder contains sub-directories containing all supplementary tables, data needed to generate figures, and catalog of reagents/oligonucleotides used. Data used to recompile provided supplementary data tables is also provided.
 
-Each supplementary table/file (`supplementary_file_1`, `supplementary_file_2`, `supplementary_table_1`, `supplementary_table_2`) documents its own tabs and columns in a `README` sheet embedded in the workbook itself -- there is no separate column-keys file anymore.
+Each supplementary Excel workbook (`supplementary_file_1`, `supplementary_file_3`, `supplementary_table_1`, `supplementary_table_2`) documents its own tabs and columns in a `README` sheet embedded in the workbook itself -- there is no separate column-keys file anymore. (`supplementary_file_2` is a PDF, not a workbook, so this doesn't apply to it.)
 
 ## extra_data
 Contains all external data used for analysis and figure generation, such as: BRIDGES and CARRIERS case-control data, BRCA1 SGE data, ThermoMPNN/SASA structural predictions, and the X4A intrinsically disordered region (IDR) library.
@@ -32,9 +32,10 @@ The case_control_data sub-folder contains data accessed from the BRIDGES and CAR
 
 ## final_tables
 Contains all final supplementary tables. Includes final table for figure generation, output of case-control analysis, and all oligos used in experiments
-* supplementary_file_2_BARD1_all_reagents.xlsx - Multi-tabbed file containing sequences and descriptions of all oligos and reagents used in experiments (Supplementary File 2)
-* supplementary_table_1_BARD1_OddsRatios_table.xlsx - Supplementary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study (Supplementary Table 1)
 * supplementary_file_1_BARD1_SGE_final_table.xlsx - Large supplementary table containing all data from this study in multiple tabs. Used as input for all figure generation and analysis (Supplementary File 1)
+* supplementary_file_2_log2_ratios.pdf - Plots of log2 ratios for all variants, by SGE target and replicate, at each timepoint (D5 and D13) (Supplementary File 2)
+* supplementary_file_3_BARD1_all_reagents.xlsx - Multi-tabbed file containing sequences and descriptions of all oligos and reagents used in experiments (Supplementary File 3)
+* supplementary_table_1_BARD1_OddsRatios_table.xlsx - Supplementary table containing raw number of variants going into the case-control analysis done utilizing the BRIDGES and CARRIERS cohorts done in this study (Supplementary Table 1)
 * supplementary_table_2_BARD1_variant_reclass_table.xlsx - Multi-tabbed file containing controls, OddsPath calculations, and evidence used in reclassification of VUS (Supplementary Table 2)
 
 ### supp_table_inputs
