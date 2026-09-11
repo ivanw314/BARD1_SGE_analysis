@@ -1,6 +1,6 @@
 '''
-Script to generate helical wheel plots for BARD1 and BRCA1 helices based on aggregated functional scores from saturation genome editing data. 
-Used to build Fig. 6b
+Script to generate helical wheel plots for BARD1 and BRCA1 helices based on aggregated functional scores from saturation genome editing data.
+Used to build Fig. 5b
 '''
 
 import numpy as np
